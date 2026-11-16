@@ -4,6 +4,8 @@ import { defaults } from '../experiments/types';
 import { fmt } from '../lib/num';
 import { sfx } from '../lib/audio';
 import { Collapse, Icon, LiveMath, Panel, ReadoutGrid, Slider, Stars, Toggle } from './ui';
+import { GameDay } from '../gameplay/GameDay';
+import { THEMES } from '../gameplay/themes';
 
 interface Props {
   def: ExperimentDef<never>;
@@ -16,6 +18,12 @@ interface Props {
   onAttempt: (id: string) => void;
   onGoto: (id: string) => void;
   onBack: () => void;
+  /** Misión de guardia del experimento, si el tema la tiene. */
+  defended?: boolean;
+  onDefend?: (themeId: string, score: number) => void;
+  /** Borrador del día de guardia del tema (medidas ya elegidas). */
+  draft?: Record<string, string>;
+  onDraft?: (themeId: string, picks: Record<string, string>) => void;
 }
 
 export function ExperimentView({
@@ -29,13 +37,19 @@ export function ExperimentView({
   onAttempt,
   onGoto,
   onBack,
+  defended = false,
+  onDefend,
+  draft,
+  onDraft,
 }: Props) {
   const [params, setParams] = useState<Params>(() => defaults(def.params));
   const [hintOpen, setHintOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ pass: boolean; detail: string } | null>(null);
   const [justSolved, setJustSolved] = useState(false);
   const [earned, setEarned] = useState(0);
+  const [mode, setMode] = useState<'explorar' | 'mision'>('explorar');
   const resultRef = useRef<HTMLDivElement>(null);
+  const theme = THEMES.find((t) => t.expId === def.id);
 
   // Reinicia al cambiar de experimento
   useEffect(() => {
@@ -43,6 +57,7 @@ export function ExperimentView({
     setFeedback(null);
     setHintOpen(false);
     setJustSolved(false);
+    setMode('explorar');
   }, [def]);
 
   const data = useMemo(() => def.compute(params) as never, [def, params]);
@@ -96,6 +111,81 @@ export function ExperimentView({
 
   const visibleParams = def.params.filter((p) => !p.showIf || p.showIf(params));
 
+  if (mode === 'mision' && theme && onDefend) {
+    return (
+      <div className="exp">
+        <header className="exp__head">
+          <button type="button" className="btn btn--ghost" onClick={onBack}>
+            <Icon name="arrowLeft" size={16} /> Laboratorio
+          </button>
+          <div className="exp__title">
+            <span className="exp__num">{def.num}</span>
+            <div>
+              <h2>{def.title}</h2>
+              <p>
+                {def.kicker} · <span className="mono">{def.slides}</span>
+              </p>
+            </div>
+          </div>
+          <div className="exp__nav">
+            <div className="modetabs" role="tablist" aria-label="Modo del experimento">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={false}
+                className="modetab"
+                onClick={() => {
+                  setMode('explorar');
+                  sfx.click();
+                }}
+              >
+                <Icon name="gauge" size={14} /> Explorar
+              </button>
+              <button type="button" role="tab" aria-selected className="modetab is-on">
+                <Icon name="shield" size={14} /> Día de guardia
+                {defended && <Icon name="check" size={12} />}
+              </button>
+            </div>
+          </div>
+        </header>
+        <div className="mission__frame">
+          <aside className="mission__side">
+            <p className="mission__sidetag">
+              <Icon name="info" size={13} /> Del tema a la decisión
+            </p>
+            <h4>{theme.title}</h4>
+            <p className="mission__q">{theme.question}</p>
+            <p>{theme.concept}</p>
+            <code className="mission__formula">{theme.formula}</code>
+            <div className="mission__trap">
+              <Icon name="flame" size={14} />
+              <p>{theme.trap}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn--ghost btn--tiny"
+              onClick={() => {
+                setMode('explorar');
+                sfx.click();
+              }}
+            >
+              <Icon name="gauge" size={13} /> Abrir los sliders
+            </button>
+          </aside>
+          <GameDay
+            theme={theme}
+            def={def}
+            defended={defended}
+            draft={draft}
+            onDraft={onDraft}
+            onExit={() => setMode('explorar')}
+            onDefend={onDefend}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="exp">
       <header className="exp__head">
@@ -112,6 +202,35 @@ export function ExperimentView({
           </div>
         </div>
         <div className="exp__nav">
+          {theme && onDefend && (
+            <div className="modetabs" role="tablist" aria-label="Modo del experimento">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'explorar'}
+                className={`modetab ${mode === 'explorar' ? 'is-on' : ''}`}
+                onClick={() => {
+                  setMode('explorar');
+                  sfx.click();
+                }}
+              >
+                <Icon name="gauge" size={14} /> Explorar
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === 'mision'}
+                className={`modetab ${mode === 'mision' ? 'is-on' : ''}`}
+                onClick={() => {
+                  setMode('mision');
+                  sfx.click();
+                }}
+              >
+                <Icon name="shield" size={14} /> Día de guardia
+                {defended && <Icon name="check" size={12} />}
+              </button>
+            </div>
+          )}
           <button
             type="button"
             className="btn btn--icon"
@@ -146,6 +265,41 @@ export function ExperimentView({
             <Icon name="spark" size={16} />
             <p>{def.idea}</p>
           </div>
+
+          {theme && (
+            <Panel title="Qué se aprende aquí" icon="target">
+              <div className="learn">
+                <div className="learn__row">
+                  <span className="learn__tag">Al terminar</span>
+                  <p>{theme.learn.goal}</p>
+                </div>
+                <div className="learn__row">
+                  <span className="learn__tag">Cómo se manifiesta</span>
+                  <p>{theme.learn.sign}</p>
+                </div>
+                <div className="learn__row">
+                  <span className="learn__tag">Qué mirar</span>
+                  <p>{theme.learn.watch}</p>
+                </div>
+                <div className="learn__trap">
+                  <Icon name="flame" size={14} />
+                  <p>
+                    <strong>El error clásico:</strong> {theme.trap}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--tiny learn__cta"
+                  onClick={() => {
+                    setMode('mision');
+                    sfx.nav();
+                  }}
+                >
+                  <Icon name="shield" size={13} /> Ponerlo a prueba en el día de guardia
+                </button>
+              </div>
+            </Panel>
+          )}
 
           <Panel title="Gráfica del comportamiento" icon="wave">
             <def.Plot data={data} />

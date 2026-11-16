@@ -2,6 +2,8 @@ import { CHAPTERS, EXPERIMENTS } from '../experiments';
 import type { Progress } from '../lib/storage';
 import { rankFor } from '../lib/storage';
 import { Icon, Stars } from './ui';
+import { FUNCIONES } from '../gameplay/funciones';
+import { ETAPAS } from '../gameplay/defensa';
 import { sfx } from '../lib/audio';
 
 const CHAPTER_ICON: Record<string, string> = {
@@ -16,9 +18,28 @@ interface Props {
   onGoto: (id: string) => void;
   onStart: () => void;
   onTour: () => void;
+  /** Paneles de juego (funciones y sustentación) que se insertan antes de los bloques. */
+  extra?: React.ReactNode;
+  onDefiende?: () => void;
+  onSustenta?: () => void;
+  /** Respaldo del avance: descargar, importar y reiniciar. */
+  onExport?: () => void;
+  onImport?: (file: File) => void;
+  onReset?: () => void;
 }
 
-export function LabHome({ progress, onGoto, onStart, onTour }: Props) {
+export function LabHome({
+  progress,
+  onGoto,
+  onStart,
+  onTour,
+  extra,
+  onDefiende,
+  onSustenta,
+  onExport,
+  onImport,
+  onReset,
+}: Props) {
   const total = EXPERIMENTS.length;
   const done = EXPERIMENTS.filter((e) => progress.exps[e.id]?.done).length;
   const { rank, next, prog, idx } = rankFor(progress.xp);
@@ -124,6 +145,94 @@ export function LabHome({ progress, onGoto, onStart, onTour }: Props) {
           </div>
         </div>
       </section>
+
+      {(extra || onDefiende || onSustenta || onExport || onImport || onReset) && (
+        <section className="gamehub">
+          <header className="gamehub__head">
+            <p className="gamehub__kicker">
+              <Icon name="shield" size={14} /> Después de explorar
+            </p>
+            <h2>Entender no es mover sliders</h2>
+            <p>
+              Dos piezas convierten los {total} experimentos en criterio: <strong>Defiende</strong> pone a prueba las{' '}
+              {FUNCIONES.length} funciones críticas de la exposición y <strong>Sustentación</strong> simula el examen con
+              preguntas aleatorias de los siete temas, cálculo y repreguntas.
+            </p>
+          </header>
+          <div className="gamehub__grid">
+            {onDefiende && (
+              <button type="button" className="gamehub__card gamehub__card--defiende" onClick={onDefiende}>
+                <span className="gamehub__icon">
+                  <Icon name="shield" size={22} />
+                </span>
+                <strong>Defiende</strong>
+                <em>{FUNCIONES.length} funciones · 4 bloques</em>
+                <p>
+                  Afirmaciones que suenan bien y fallan en un detalle. Elige el cierre correcto y abre el experimento
+                  que lo demuestra.
+                </p>
+                <span className="gamehub__cta">
+                  <Icon name="arrowRight" size={14} /> Abrir el mapa
+                </span>
+              </button>
+            )}
+            {onSustenta && (
+              <button type="button" className="gamehub__card gamehub__card--sustenta" onClick={onSustenta}>
+                <span className="gamehub__icon">
+                  <Icon name="trophy" size={22} />
+                </span>
+                <strong>Sustentación</strong>
+                <em>{ETAPAS.length} niveles · hasta 10 preguntas por ronda</em>
+                <p>
+                  Conceptual, matemático, crítico y examen final. Cálculo con tolerancia, repreguntas del profesor y
+                  casos de diagnóstico.
+                </p>
+                <span className="gamehub__cta">
+                  <Icon name="arrowRight" size={14} /> Empezar simulacro
+                </span>
+              </button>
+            )}
+          </div>
+          {extra}
+          {(onExport || onImport || onReset) && (
+            <div className="backup">
+              <div className="backup__text">
+                <strong>Tu avance, a salvo</strong>
+                <p>
+                  El progreso vive en este navegador. Descárgalo antes de cambiar de equipo o de limpiar los datos del
+                  sitio; después puedes importarlo y seguir donde ibas.
+                </p>
+              </div>
+              <div className="backup__actions">
+                {onExport && (
+                  <button type="button" className="btn btn--ghost btn--tiny" onClick={onExport}>
+                    <Icon name="arrowRight" size={13} /> Descargar progreso
+                  </button>
+                )}
+                {onImport && (
+                  <label className="btn btn--ghost btn--tiny backup__file">
+                    <Icon name="reset" size={13} /> Importar
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) onImport(f);
+                        e.currentTarget.value = '';
+                      }}
+                    />
+                  </label>
+                )}
+                {onReset && (
+                  <button type="button" className="btn btn--ghost btn--tiny backup__danger" onClick={onReset}>
+                    <Icon name="x" size={13} /> Reiniciar
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="chapters">
         {CHAPTERS.map((ch, ci) => {

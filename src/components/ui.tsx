@@ -32,6 +32,7 @@ const paths: Record<string, string> = {
   lock: 'M6 11h12v10H6zM9 11V7a3 3 0 0 1 6 0v4',
   flame: 'M12 3s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 1 3s2-3 2-8Z',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  download: 'M12 3v12M7 10l5 5 5-5M4 20h16',
 };
 
 export function Icon({
