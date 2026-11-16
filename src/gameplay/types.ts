@@ -107,6 +107,10 @@ export interface DayReport {
   criticals: number;
   score: number;
   failed: CaseResult[];
+  /** Casos resueltos con una medida que sí cambia la física. */
+  cleanFixes: number;
+  /** Casos resueltos conservando el diseño (ya cumplían). */
+  kept: number;
 }
 
 export const merge = (base: Params, patch?: Params): Params => ({ ...base, ...(patch ?? {}) });
@@ -142,10 +146,12 @@ export function evaluateDay(spec: DailySpec, targets: TargetSpec[], picks: Picks
   const criticals = failed.filter((c) => c.goals.some((g) => !g.pass && g.target.severity === 'crit')).length;
   const fakeCount = cases.filter((c) => c.goals.some((g) => g.fake)).length;
   const valid = incidents === 0;
+  const cleanFixes = cases.filter((c) => c.pass && c.applied && !c.goals.some((g) => g.fake)).length;
+  const kept = cases.filter((c) => c.pass && !c.applied).length;
   const score = valid
     ? Math.max(0, 100 - 15 * fakeCount)
     : Math.round((100 * (cases.length - incidents)) / cases.length);
-  return { cases, valid, incidents, criticals, score, failed };
+  return { cases, valid, incidents, criticals, score, failed, cleanFixes, kept };
 }
 
 /** Aciertos del diagnóstico previo (paso 1). */

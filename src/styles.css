@@ -3359,3 +3359,193 @@ code {
     gap: 2px;
   }
 }
+
+/* ————— Respaldo del progreso, avisos y recuperación ————— */
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #6ea8fe) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #6ea8fe) 32%, transparent);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.notice .icon {
+  flex: none;
+}
+
+.notice button {
+  margin-left: auto;
+  flex: none;
+}
+
+.crash {
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 2rem;
+  border-radius: 18px;
+  background: var(--panel, #14181f);
+  border: 1px solid color-mix(in srgb, #ff6b6b 35%, transparent);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.crash h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.crash p {
+  margin: 0;
+  color: var(--muted, #9aa4b2);
+  line-height: 1.5;
+}
+
+.crash__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crash__detail {
+  margin: 0;
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: #0b0e13;
+  color: #d7dde6;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 0.72rem;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.backup {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--line, #2a3140) 90%, transparent);
+  background: color-mix(in srgb, var(--panel, #14181f) 70%, transparent);
+}
+
+.backup__text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--muted, #9aa4b2);
+}
+
+.backup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.backup label.btn {
+  cursor: pointer;
+}
+
+.backup input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ————— Simulacro: niveles, récord y progreso ————— */
+
+.sust__record {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #6ea8fe) 16%, transparent);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+.sust__stagereq {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.sust__stage:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.sust__stage.is-active .sust__stagereq {
+  opacity: 0.95;
+}
+
+/* ————— Informe del día: desglose y barra de avance ————— */
+
+.report__bars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin: 0.6rem 0 0.8rem;
+  font-size: 0.8rem;
+  color: var(--muted, #9aa4b2);
+}
+
+.report__bars strong {
+  color: var(--fg, #e9eef5);
+  font-variant-numeric: tabular-nums;
+}
+
+.mission__progress {
+  display: grid;
+  gap: 0.3rem;
+  margin-right: auto;
+  min-width: 180px;
+}
+
+.mission__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line, #2a3140) 80%, transparent);
+  overflow: hidden;
+}
+
+.mission__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #34d399);
+  transition: width 0.25s ease;
+}
+
+.mission__barpct {
+  font-size: 0.72rem;
+  color: var(--muted, #9aa4b2);
+  font-variant-numeric: tabular-nums;
+}
+
+.notice__x {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.notice__x:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}

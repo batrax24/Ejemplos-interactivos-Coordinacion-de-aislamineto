@@ -28,16 +28,25 @@ export function GameDay({
   def,
   onExit,
   onDefend,
+  onDraft,
+  draft,
   defended,
 }: {
   theme: ThemeSpec;
   def: ExperimentDef<never>;
   onExit: () => void;
   onDefend: (themeId: string, score: number) => void;
+  /** Guarda el borrador de medidas para no perderlo al salir. */
+  onDraft?: (themeId: string, picks: Record<string, string>) => void;
+  draft?: Record<string, string>;
   defended: boolean;
 }) {
   const spec = theme.daily;
-  const [picks, setPicks] = useState<Picks>({});
+  // El borrador guardado se descarta si menciona casos que ya no existen.
+  const [picks, setPicks] = useState<Picks>(() => {
+    const validos = Object.entries(draft ?? {}).filter(([id]) => spec.cases.some((c) => c.id === id));
+    return Object.fromEntries(validos);
+  });
   const [forecast, setForecast] = useState<Record<string, 'falla' | 'sostiene' | undefined>>({});
   const [submitted, setSubmitted] = useState(false);
   const [openCase, setOpenCase] = useState<string>(spec.cases[0]?.id ?? '');
@@ -66,7 +75,14 @@ export function GameDay({
 
   const pick = (id: string, optionId: string) => {
     sfx.click();
-    setPicks((prev) => ({ ...prev, [id]: prev[id] === optionId ? undefined : optionId }));
+    setPicks((prev) => {
+      const next: Picks = { ...prev, [id]: prev[id] === optionId ? undefined : optionId };
+      const clean = Object.fromEntries(
+        Object.entries(next).filter(([, v]) => Boolean(v)) as [string, string][],
+      );
+      onDraft?.(theme.id, clean);
+      return next;
+    });
     setSubmitted(false);
   };
 
@@ -236,6 +252,14 @@ export function GameDay({
       )}
 
       <div className="mission__send">
+        <div className="mission__progress">
+          <div className="mission__bar">
+            <span style={{ width: `${(Object.values(picks).filter(Boolean).length / spec.cases.length) * 100}%` }} />
+          </div>
+          <span className="mission__barpct">
+            {Object.values(picks).filter(Boolean).length}/{spec.cases.length} casos decididos
+          </span>
+        </div>
         <button type="button" className="btn btn--primary" onClick={send} disabled={missing > 0}>
           <Icon name="play" size={15} /> Enviar jornada
           {missing > 0 && <span className="mission__pending">faltan {missing}</span>}
@@ -251,11 +275,19 @@ export function GameDay({
               </strong>
               <span className="report__score">{report.score}/100</span>
             </div>
-            {fc.total > 0 && (
-              <p className="report__line">
-                Diagnóstico previo: acertaste {fc.hits} de {fc.total}.
-              </p>
-            )}
+            <div className="report__bars">
+              <span>
+                <strong>{report.cleanFixes}</strong> resueltos con medida física
+              </span>
+              <span>
+                <strong>{report.kept}</strong> casos que ya cumplían y se conservaron
+              </span>
+              {fc.total > 0 && (
+                <span>
+                  diagnóstico previo: <strong>{fc.hits}/{fc.total}</strong>
+                </span>
+              )}
+            </div>
             <ul className="report__list">
               {report.cases.map((c: CaseResult) => {
                 const fake = c.goals.find((g) => g.fake);

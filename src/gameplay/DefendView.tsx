@@ -8,7 +8,7 @@ import type { FuncionSpec } from './funciones';
 import { THEMES } from './themes';
 
 /**
- * "Defiende": las 14 funciones de la exposición en forma de mapa conceptual.
+ * "Defiende": las funciones críticas de la exposición en forma de mapa conceptual.
  *
  * Cada capítulo reúne las afirmaciones que el material considera críticas. Una
  * función se desbloquea resolviendo los experimentos de su bloque; al abrirla,
@@ -27,6 +27,7 @@ export function DefendView({
   const [open, setOpen] = useState<string | null>(null);
   const solved = progress.lab.funciones;
 
+  const total = FUNCIONES.length;
   const chapterDone = (chapterId: string) => {
     const fns = FUNCIONES.filter((f) => f.chapter === chapterId);
     return fns.filter((f) => solved[f.id]).length;
@@ -38,12 +39,12 @@ export function DefendView({
         <div className="exp__title">
           <span className="exp__num"></span>
           <div>
-            <h2>Defiende: las 14 funciones</h2>
+            <h2>Defiende: las funciones críticas</h2>
             <p>Las afirmaciones que separan a quien entendió de quien memorizó</p>
           </div>
         </div>
         <div className="defend__count">
-          <Icon name="shield" size={15} /> {Object.keys(solved).length}/{FUNCIONES.length} defendidas
+          <Icon name="shield" size={15} /> {Object.keys(solved).length}/{total} defendidas
         </div>
       </header>
 

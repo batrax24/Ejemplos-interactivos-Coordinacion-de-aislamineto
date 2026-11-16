@@ -54,17 +54,30 @@ export const ETAPAS = [
   {
     n: 1,
     name: 'Nivel conceptual',
-    blurb: 'Las ocho ideas que el material considera mapa conceptual. Sin fórmulas todavía: qué significa cada cosa.',
+    blurb: 'Las ideas críticas del material, sin fórmulas: qué significa cada cosa y por qué importa.',
+    size: 5,
+    min: 4,
   },
   {
     n: 2,
     name: 'Nivel matemático',
-    blurb: 'Los seis ejercicios del curso y sus variantes. Números con coma decimal y unidades correctas.',
+    blurb: 'Los ejercicios del curso y sus variantes. Números con coma decimal y unidades correctas.',
+    size: 5,
+    min: 4,
   },
   {
     n: 3,
     name: 'Nivel crítico',
     blurb: 'Casos y repreguntas: qué medida cambia la física, qué magnitud se confunde con cuál y qué margen es suficiente.',
+    size: 5,
+    min: 4,
+  },
+  {
+    n: 4,
+    name: 'Examen final',
+    blurb: 'Diez preguntas de todo el material, mezcladas y sin aviso de tema. Ocho aciertos para cerrar.',
+    size: 10,
+    min: 8,
   },
 ] as const;
 
@@ -298,6 +311,276 @@ const calculos: Pregunta[] = [
   },
   {
     kind: 'calculo',
+    id: 'c13',
+    tema: 'T1 · estadística inversa',
+    prompt: 'Cadena con U₅₀ = 700 kV y s = 6 %. ¿Qué tensión produce el 2 % de disrupción, en kV cresta?',
+    unit: 'kV cresta',
+    expected: 613.7,
+    tol: 1.5,
+    why: 'σ = 42 kV y z(2 %) = −2,054: U₂ = 700 − 2,054·42 = 613,7 kV. Bajar del 10 % al 2 % cuesta 32 kV más.',
+    repregunta: {
+      prompt: '«¿Y si solo tengo el dato de U₁₀?»',
+      options: [
+        { id: 'a', text: 'No se puede estimar otro cuantil sin σ.' },
+        { id: 'b', text: 'Con U₁₀ y σ, cada cuantil se obtiene con su z.', ok: true },
+        { id: 'c', text: 'U₂ es siempre un 20 % menor que U₁₀.' },
+      ],
+      why: 'Los cuantiles de una normal se separan z·σ: con dos datos (U₁₀ y σ) se reconstruye cualquier otro. Sin σ no hay forma.',
+    },
+    expIds: ['disrupcion'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c14',
+    tema: 'T1 · maniobra y soporte',
+    prompt:
+      'Sistema de 245 kV con sobretensión de maniobra de 2,5 p.u. ¿Qué tensión soportada de maniobra exige el criterio U_soporte = 1,15·U_man, en kV cresta?',
+    unit: 'kV cresta',
+    expected: 575.1,
+    tol: 1,
+    why: 'Û_f = 200,04 kV; U_man = 2,5·200,04 = 500,1 kV; U_soporte = 1,15·500,1 = 575,1 kV.',
+    repregunta: {
+      prompt: '«¿Ese 1,15 es un margen cualquiera?»',
+      options: [
+        { id: 'a', text: 'Sí, es un número de comodidad.' },
+        { id: 'b', text: 'Es el factor de seguridad del criterio del material: 15 % sobre la sobretensión.', ok: true },
+        { id: 'c', text: 'No, es la corrección por altitud.' },
+      ],
+      why: 'El 15 % es margen de coordinación sobre el esfuerzo calculado. La altitud se corrige aparte, con δ.',
+    },
+    expIds: ['maniobra'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c15',
+    tema: 'T2 · cadena corta',
+    prompt: 'Línea de 145 kV, k_f = 25 mm/kV y discos de 250 mm. ¿Cuántos discos exige la fuga?',
+    unit: 'discos',
+    expected: 15,
+    tol: 0.1,
+    why: '25·145 = 3 625 mm; 3 625/250 = 14,5 → 15 discos. Otra vez el redondeo hacia arriba.',
+    repregunta: {
+      prompt: '«¿Cuánto mide esa cadena con paso de 0,146 m?»',
+      options: [
+        { id: 'a', text: '2,19 m', ok: true },
+        { id: 'b', text: '3,75 m (15 × 0,250)' },
+        { id: 'c', text: '1,46 m' },
+      ],
+      why: '15 × 0,146 = 2,19 m. El paso es la separación entre discos; 0,250 m es la fuga por disco y hay que multiplicarla por 15 para la fuga total (3 750 mm).',
+    },
+    expIds: ['cadena'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c16',
+    tema: 'T2 · densidad y caída de rigidez',
+    prompt:
+      'Instalación a 2 640 m y 15 °C con U₅₀ = 700 kV al nivel del mar (δ = 0,724). ¿Cuánto vale U₅₀ corregida, en kV?',
+    unit: 'kV',
+    expected: 549.5,
+    tol: 1,
+    why: 'U₅₀(δ) = 700·0,724^0,75 = 549,5 kV: un 21,5 % menos. La misma geometría, otro aire.',
+    repregunta: {
+      prompt: '«¿Se arregla subiendo la tensión de ensayo?»',
+      options: [
+        { id: 'a', text: 'Sí: el ensayo compensa la altitud.' },
+        { id: 'b', text: 'No: hay que compensar el aislamiento (más distancia o más nivel), no el ensayo.', ok: true },
+        { id: 'c', text: 'Sí, basta con medir otro día.' },
+      ],
+      why: 'El ensayo no cambia la instalación. La altitud se compensa con distancia de fuga, longitud de arco o nivel de aislamiento.',
+    },
+    expIds: ['atmosfera'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c17',
+    tema: 'T3 · viento y separación',
+    prompt:
+      'Cadena de 2,50 m inclinada 45° con una distancia en reposo de 3,60 m. ¿Cuál es la separación resultante, en m?',
+    unit: 'm',
+    expected: 1.83,
+    tol: 2,
+    why: 'Δx = 2,50·sen 45° = 1,77 m; d_h = 3,60 − 1,77 = 1,83 m. Faltan 0,67 m para los 2,50 exigidos.',
+    repregunta: {
+      prompt: '«¿Aumentar d₀ a 4,30 m resuelve el caso?»',
+      options: [
+        { id: 'a', text: 'Sí: 4,30 − 1,77 = 2,53 m > 2,50 m.', ok: true },
+        { id: 'b', text: 'No, porque el viento también crece.' },
+        { id: 'c', text: 'Solo si se acorta la cadena.' },
+      ],
+      why: 'La distancia disponible es lineal con d₀: +0,7 m en la cruceta dan 2,53 m y el caso pasa. La cadena acortada también serviría, pero reduce fuga.',
+    },
+    expIds: ['oscilacion', 'separacion'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c18',
+    tema: 'T3 · separación entre fases',
+    prompt:
+      'Con K = 0,75, F = 12 m, L = 4 m y Vₙ = 500 kV, ¿cuánto vale la separación preliminar D, en m?',
+    unit: 'm',
+    expected: 6.33,
+    tol: 2,
+    why: 'D = 0,75·√(12+4) + 500/150 = 3,00 + 3,33 = 6,33 m. A 500 kV el término eléctrico ya supera al geométrico.',
+    repregunta: {
+      prompt: '«¿Qué término crece más rápido al subir de 245 a 500 kV?»',
+      options: [
+        { id: 'a', text: 'El geométrico.' },
+        { id: 'b', text: 'El eléctrico: pasa de 1,63 a 3,33 m.', ok: true },
+        { id: 'c', text: 'Los dos igual.' },
+      ],
+      why: 'Vₙ/150 es lineal: 245/150 = 1,63 m frente a 500/150 = 3,33 m. El término de la raíz solo cambia si cambian F o L.',
+    },
+    expIds: ['separacion'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c19',
+    tema: 'T4 · guarda y sombra',
+    prompt:
+      'Guarda con Δh = 4 m y Δx = 3 m, corriente de diseño 20 kA. ¿Cuál es el ángulo de apantallamiento, en grados?',
+    unit: '°',
+    expected: 36.87,
+    tol: 2,
+    why: 'α = arctan(3/4) = 36,87°. Con r_c = 10·20^0,65 = 70,1 m, el radio es enorme; el ángulo es el que delata la exposición.',
+    repregunta: {
+      prompt: '«¿Cuál es el semiancho de sombra protegido?»',
+      options: [
+        { id: 'a', text: 'r_c·sen α = 70,1·0,60 = 42,1 m', ok: true },
+        { id: 'b', text: 'r_c·cos α = 56,1 m' },
+        { id: 'c', text: 'Δx = 3 m' },
+      ],
+      why: 'La sombra horizontal por lado es la proyección del radio de atracción sobre la horizontal: b = r_c·sen α. Aun así, el criterio de ángulo ≤ 30° sigue sin cumplirse.',
+    },
+    expIds: ['guarda'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c20',
+    tema: 'T5 · tierra con inductancia',
+    prompt:
+      'Rayo de 15 kA, R_t = 25 Ω, L = 4 µH y di/dt = 12 kA/µs. ¿Cuál es el potencial de torre, en kV?',
+    unit: 'kV',
+    expected: 423,
+    tol: 1.5,
+    why: 'V_t = 15·25 + 4·12 = 375 + 48 = 423 kV. El 11 % del potencial viene de la inductancia, no de la resistencia.',
+    repregunta: {
+      prompt: '«Si la cadena es de 700 kV, ¿qué tan cerca está el flameo?»',
+      options: [
+        { id: 'a', text: 'Flamea: 423 supera 700.' },
+        { id: 'b', text: 'No flamea, pero quedan 277 kV de margen (un 65 % de la cadena).', ok: true },
+        { id: 'c', text: 'No se puede saber sin la densidad del aire.' },
+      ],
+      why: 'El criterio compara V_t contra la capacidad de la cadena: 423 < 700 kV. El margen es positivo, aunque un rayo mayor o un suelo peor lo consumen rápido.',
+    },
+    expIds: ['tierra'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c21',
+    tema: 'T3 · ondas en extremo abierto',
+    prompt: 'Onda de 120 kV que llega a un extremo abierto (Γ = +1). ¿Qué tensión máxima aparece en el extremo, en kV?',
+    unit: 'kV',
+    expected: 240,
+    tol: 1,
+    why: 'V = V_i·(1 + Γ) = 120·2 = 240 kV. La reflexión duplica la tensión, no la energía.',
+    repregunta: {
+      prompt: '«¿Por qué importa esto para el pararrayos?»',
+      options: [
+        { id: 'a', text: 'Porque la onda puede duplicarse antes de que el descargador actúe lejos.', ok: true },
+        { id: 'b', text: 'Porque el pararrayos refleja energía al generador.' },
+        { id: 'c', text: 'No importa: solo pasa en laboratorio.' },
+      ],
+      why: 'En un extremo abierto o en una transición a impedancia alta la tensión se duplica: es la razón por la que se limita la distancia pararrayos–equipo y se revisan los puntos de reflexión.',
+    },
+    expIds: ['ondas', 'pararrayos'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c22',
+    tema: 'T6 · distancia y BIL mínimo',
+    prompt:
+      'Pararrayos con U_res = 500 kV, L_c = 1,2 µH/m y di/dt = 10 kA/µs a 5 m del equipo. ¿Qué tensión ve el equipo, en kV?',
+    unit: 'kV',
+    expected: 560,
+    tol: 1,
+    why: 'U_eq = 500 + 1,2·10·5 = 500 + 60 = 560 kV. La distancia aporta tanto como 60 kV de tensión residual extra.',
+    repregunta: {
+      prompt: '«Con margen exigido del 20 %, ¿qué BIL mínimo hace falta?»',
+      options: [
+        { id: 'a', text: '672 kV', ok: true },
+        { id: 'b', text: '560 kV' },
+        { id: 'c', text: '700 kV' },
+      ],
+      why: 'BIL ≥ 1,20·U_eq = 1,20·560 = 672 kV. El margen se pide sobre la tensión que llega, no sobre la residual.',
+    },
+    expIds: ['pararrayos'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c23',
+    tema: 'T7 · corona con haz',
+    prompt:
+      'Peek con f = 60 Hz, δ = 0,9, r = 2 cm, s = 600 cm, U = 220 kV y U₀ = 215 kV. ¿Cuánto valen las pérdidas, en kW/km?',
+    unit: 'kW/km',
+    expected: 0.33,
+    tol: 6,
+    why: 'P = (242/0,9)·85·√(2/600)·5²·10⁻⁵ = 0,33 kW/km. Con solo 5 kV de exceso, el cuadrado del exceso es diminuto.',
+    repregunta: {
+      prompt: '«¿Y si U₀ bajara a 190 kV?»',
+      options: [
+        { id: 'a', text: 'Subiría a unos 12 kW/km: el exceso pasa de 5 a 30 kV y va al cuadrado.', ok: true },
+        { id: 'b', text: 'Subiría un 5 %.' },
+        { id: 'c', text: 'No cambiaría.' },
+      ],
+      why: '(30/5)² = 36: el exceso se multiplica por seis y las pérdidas por 36 (0,33 → 11,9 kW/km). Es la sensibilidad que el material quiere que se entienda.',
+    },
+    expIds: ['corona'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c24',
+    tema: 'T1 · lectura de la curva',
+    prompt:
+      'Con U₅₀ = 700 kV y s = 6 %, ¿qué probabilidad de disrupción corresponde a 640 kV? (en %, aproximado)',
+    unit: '%',
+    expected: 7.7,
+    tol: 20,
+    why: 'z = (640 − 700)/42 = −1,43 → Φ(−1,43) ≈ 7,7 %. Entre U₁₀ (646 kV) y la mediana, la probabilidad cae rápido.',
+    repregunta: {
+      prompt: '«¿Se puede afirmar que 640 kV es seguro porque está bajo U₅₀?»',
+      options: [
+        { id: 'a', text: 'Sí: bajo la mediana no hay falla.' },
+        { id: 'b', text: 'No: está bajo la mediana y aun así falla en 1 de cada 13 ensayos.', ok: true },
+        { id: 'c', text: 'Solo en corriente continua.' },
+      ],
+      why: 'U₅₀ es la mediana (50 %). Estar por debajo solo reduce la probabilidad; para "casi nunca" hay que ir a U₁₀ o menos.',
+    },
+    expIds: ['disrupcion'],
+  },
+  {
+    kind: 'calculo',
+    id: 'c25',
+    tema: 'T2 · longitud de cadena en torre',
+    prompt:
+      '27 discos de 292 mm con paso de 0,146 m. ¿Cuánto mide la cadena, en m?',
+    unit: 'm',
+    expected: 3.942,
+    tol: 1,
+    why: '27 · 0,146 = 3,942 m. Con una torre que admite 3,9 m, faltan 4 cm: el criterio de fuga aprueba y el geométrico no.',
+    repregunta: {
+      prompt: '«¿Qué solución cambia menos la torre?»',
+      options: [
+        { id: 'a', text: 'Discos de 380 mm: menos discos y cadena más corta.', ok: true },
+        { id: 'b', text: 'Añadir más discos.' },
+        { id: 'c', text: 'Lavar los aisladores.' },
+      ],
+      why: 'Con 380 mm se necesitan ⌈6125/380⌉ = 17 discos → 2,48 m. La cadena cabe y la fuga se cumple. Añadir discos empeora la altura.',
+    },
+    expIds: ['cadena'],
+  },
+  {
+    kind: 'calculo',
     id: 'c12',
     tema: 'T7 · corona y radio',
     prompt:
@@ -368,26 +651,43 @@ const shuffle = <T,>(arr: T[], seed: number): T[] => {
 };
 
 /** Arma una ronda de 5 preguntas para la etapa indicada. */
+export const etapaSpec = (n: number) => ETAPAS.find((e) => e.n === n) ?? ETAPAS[0];
+
+/** Cuántas preguntas pide cada nivel. */
+export const rondaSize = (etapa: number) => etapaSpec(etapa).size;
+
+/** Mezcla las tres familias: concepto, diagnóstico y cálculo. */
+const poolDe = (etapa: number): Pregunta[] =>
+  etapa === 1
+    ? conceptos
+    : etapa === 2
+      ? calculos
+      : etapa === 3
+        ? [...diagnosticos, ...calculos]
+        : [...conceptos, ...diagnosticos, ...calculos];
+
+/**
+ * Arma una ronda del tamaño del nivel.
+ *
+ * Primero intenta no repetir tema (así cada ronda obliga a moverse por todo el
+ * material); si no alcanza, rellena con el resto. La semilla hace que la misma
+ * ronda se pueda reproducir y que dos intentos distintos no se parezcan.
+ */
 export function ronda(etapa: number, seed: number): Pregunta[] {
-  const pool =
-    etapa === 1
-      ? conceptos
-      : etapa === 2
-        ? calculos
-        : [...diagnosticos, ...calculos.filter((c) => c.kind === 'calculo')];
+  const size = rondaSize(etapa);
+  const pool = poolDe(etapa);
   const mixed = shuffle(pool, seed);
   const picked: Pregunta[] = [];
   for (const p of mixed) {
-    if (picked.length >= 5) break;
+    if (picked.length >= size) break;
     if (picked.some((q) => q.tema === p.tema)) continue;
     picked.push(p);
   }
-  // Si el filtro por tema dejó menos de 5, completa con el resto.
   for (const p of mixed) {
-    if (picked.length >= 5) break;
+    if (picked.length >= size) break;
     if (!picked.includes(p)) picked.push(p);
   }
-  return picked;
+  return picked.slice(0, size);
 }
 
 /** Verifica una respuesta y devuelve el veredicto con la explicación. */

@@ -45,6 +45,26 @@ const casos1: CaseSpec[] = [
       'U₅ = 507 − 1,645·30,4 = 457 kV: el esfuerzo de 500 kV queda por encima. La altitud no cambia la tensión; cambia la resistencia del aire.',
   },
   {
+    id: 't1-d',
+    name: 'Estudio con menos margen',
+    brief:
+      'Un proyecto con presupuesto ajustado acepta el 20 % de probabilidad de disrupción. La cadena tiene U₅₀ = 700 kV y s = 6 %; el esfuerzo de maniobra es de 2,4 p.u. en 245 kV.',
+    params: { u50: 700, sigmaPct: 6, pTarget: 20, Um: 245, Fv: 2.4 },
+    goals: [goal('t1-cuantil')],
+    forecast: 'sostiene',
+    lesson: 'U₂₀ = 700 − 0,842·42 = 664,6 kV frente a 480,1 kV de esfuerzo: margen enorme. Aceptar más riesgo no cambia la física, pero sí el criterio.',
+  },
+  {
+    id: 't1-e',
+    name: 'Aislamiento degradado en servicio',
+    brief:
+      'Tras diez años de servicio la cadena perdió rigidez: U₅₀ bajó a 620 kV con s = 8 %. El esfuerzo de maniobra se mantiene en 2,5 p.u. sobre 245 kV y el objetivo es el 10 %.',
+    params: { u50: 620, sigmaPct: 8, pTarget: 10, Um: 245, Fv: 2.5 },
+    goals: [goal('t1-cuantil'), goal('t1-firmeza')],
+    forecast: 'sostiene',
+    lesson: 'U₁₀ = 620 − 1,282·49,6 = 556,4 kV contra 500,1 kV: pasa con 56 kV, la mitad del margen que tenía de nuevo. La degradación no se ve en la placa.',
+  },
+  {
     id: 't1-c',
     name: 'Lote con dispersión alta',
     brief:
@@ -138,6 +158,26 @@ const casos2: CaseSpec[] = [
       '27 discos cumplen la fuga (7 884 mm) pero miden 3,94 m y la torre admite 3,9: faltan 4 cm. Un criterio aprobado no salva los demás.',
   },
   {
+    id: 't2-d',
+    name: '69 kV con discos de 146 mm',
+    brief:
+      'Línea de 69 kV, k_f = 20 mm/kV y discos de 146 mm de fuga con paso de 0,146 m. Cadena montada: 10 discos; la torre admite 1,8 m.',
+    params: { Um: 69, kf: 20, lfDisc: 146, pitch: 0.146, nInst: 10, delta: 0.9, impulso: 200, cadMax: 1.8 },
+    goals: [goal('t2-fuga'), goal('t2-largo')],
+    forecast: 'sostiene',
+    lesson: '20·69 = 1 380 mm; 1 380/146 = 9,45 → 10 discos. Diez discos de 0,146 m son 1,46 m: cabe en la torre.',
+  },
+  {
+    id: 't2-e',
+    name: 'Cambio de criterio por nuevo estudio',
+    brief:
+      'La misma línea de 69 kV recibe un estudio actualizado: k_f sube a 25 mm/kV por la cercanía a una cementera. Los discos siguen siendo de 146 mm y la cadena montada es de 10.',
+    params: { Um: 69, kf: 25, lfDisc: 146, pitch: 0.146, nInst: 10, delta: 0.9, impulso: 200, cadMax: 2.0 },
+    goals: [goal('t2-fuga'), goal('t2-largo')],
+    forecast: 'falla',
+    lesson: '25·69 = 1 725 mm; 1 725/146 = 11,8 → 12 discos = 1,75 m. Dos discos más y la cadena sigue cabiendo: el problema es solo la fuga.',
+  },
+  {
     id: 't2-c',
     name: '145 kV con discos cortos',
     brief:
@@ -175,8 +215,8 @@ const opciones2: OptionSpec[] = [
     id: 't2-ampliar',
     label: 'Ampliar la torre para que admita la cadena',
     icon: 'tower',
-    apply: (p) => ({ cadMax: Math.max(p.cadMax, +((Math.ceil((p.kf * p.Um) / p.lfDisc) * p.pitch) + 0.2).toFixed(2)) }),
-    effect: 'Sube el límite geométrico y la cadena que exige la fuga cabe.',
+    apply: (p) => ({ cadMax: Math.max(p.cadMax, +((p.nInst * p.pitch) + 0.2).toFixed(2)) }),
+    effect: 'Sube el límite geométrico de la torre para que la cadena montada quepa.',
   },
   {
     id: 't2-lavar',
@@ -231,6 +271,26 @@ const casos3: CaseSpec[] = [
     goals: [goal('t3-separacion'), goal('t3-desplazamiento')],
     forecast: 'sostiene',
     lesson: 'Δx = 0,76 m y d_h = 2,64 m: pasa la separación y el desplazamiento queda bajo la mitad de d₀.',
+  },
+  {
+    id: 't3-d',
+    name: 'Cadena larga y viento moderado',
+    brief:
+      'Cadena de 3,07 m inclinada 15°, distancia en reposo de 3,80 m y separación exigida de 3,00 m.',
+    params: { L: 3.066, theta: 15, d0: 3.8, required: 3.0 },
+    goals: [goal('t3-separacion')],
+    forecast: 'sostiene',
+    lesson: 'Δx = 0,79 m; d_h = 3,01 m frente a 3,00 exigidos: pasa por un centímetro. Los márgenes de un centímetro no son márgenes.',
+  },
+  {
+    id: 't3-e',
+    name: 'Vano con viento de frente y cadena corta',
+    brief:
+      'Cadena de 1,5 m con 40° de inclinación, distancia en reposo de 4,0 m y separación exigida de 3,1 m.',
+    params: { L: 1.5, theta: 40, d0: 4.0, required: 3.0 },
+    goals: [goal('t3-separacion'), goal('t3-desplazamiento')],
+    forecast: 'sostiene',
+    lesson: 'Δx = 0,96 m; d_h = 3,04 m frente a 3,00 exigidos: pasa por 4 cm. El desplazamiento es menos de la mitad de d₀, pero el margen real es mínimo.',
   },
   {
     id: 't3-c',
@@ -321,6 +381,25 @@ const casos4: CaseSpec[] = [
     lesson: 'α = 21,0° y una separación de 7,0 m: geometría holgada para el mismo rayo.',
   },
   {
+    id: 't4-d',
+    name: 'Torre baja con guarda centrada',
+    brief: 'En 115 kV la guarda va 4 m sobre la fase y 1,5 m a un lado; la corriente de diseño es 20 kA.',
+    params: { dh: 4, dx: 1.5, current: 20 },
+    goals: [goal('t4-angulo'), goal('t4-electro')],
+    forecast: 'sostiene',
+    lesson: 'α = 20,6° y r_c = 70,1 m: geometría cómoda para un rayo de 20 kA.',
+  },
+  {
+    id: 't4-e',
+    name: 'Guarda descolgada hacia el lado de la fase',
+    brief:
+      'La misma torre, pero la guarda quedó a 3 m sobre la fase y 4,5 m a un lado por un error de montaje. Corriente de diseño 20 kA.',
+    params: { dh: 3, dx: 4.5, current: 20 },
+    goals: [goal('t4-angulo')],
+    forecast: 'falla',
+    lesson: 'α = 56,3°: la fase queda prácticamente fuera de la sombra. Un error de montaje de metro y medio arruina el apantallamiento.',
+  },
+  {
     id: 't4-c',
     name: 'Línea de 500 kV con guarda lateral',
     brief: 'En 500 kV la guarda va 7 m sobre la fase y 6 m a un lado; la corriente de diseño sube a 40 kA.',
@@ -407,6 +486,26 @@ const casos5: CaseSpec[] = [
     goals: [goal('t5-potencial'), goal('t5-personas')],
     forecast: 'falla',
     lesson: 'V_t = 800 + 10 = 810 kV > 700 kV: flameo inverso. La resistencia explica casi todo el problema.',
+  },
+  {
+    id: 't5-d',
+    name: 'Torre muy alta en terreno rocoso',
+    brief:
+      'Torre de 80 m: L = 12 µH y di/dt = 20 kA/µs con 25 kA. La resistencia es baja (8 Ω) pero el suelo no permite mejorarla más.',
+    params: { current: 35, Rt: 12, L: 12, diDt: 25, Ucad: 700, Vmax: 300, Rref: 20 },
+    goals: [goal('t5-potencial')],
+    forecast: 'falla',
+    lesson: 'V_t = 420 + 300 = 720 kV: flameo inverso con R_t de solo 12 Ω. El 42 % del potencial viene de L·di/dt: en torres altas la inductancia manda.',
+  },
+  {
+    id: 't5-e',
+    name: 'Rayo múltiple con tierra enmallada',
+    brief:
+      'Subestación con malla: R_t = 3 Ω. Un rayo de 40 kA con L = 2 µH y di/dt = 15 kA/µs entra por el pararrayos de la torre.',
+    params: { current: 40, Rt: 3, L: 2, diDt: 15, Ucad: 700, Vmax: 300, Rref: 20 },
+    goals: [goal('t5-potencial'), goal('t5-personas')],
+    forecast: 'sostiene',
+    lesson: 'V_t = 120 + 30 = 150 kV: la malla hace el trabajo. Con 40 kA una resistencia de 20 Ω habría dado 800 kV.',
   },
   {
     id: 't5-c',
@@ -499,6 +598,27 @@ const casos6: CaseSpec[] = [
     lesson: 'U_eq = 680 kV y M = 10,3 %: la cuenta da positivo, pero el criterio pide 20 %. Un margen positivo no es suficiente.',
   },
   {
+    id: 't6-d',
+    name: '115 kV con pararrayos lejos',
+    brief:
+      'Sistema de 115 kV: U_c = 70 kV, U_res = 280 kV, BIL = 550 kV y el pararrayos está a 12 m con L_c = 1,2 µH/m.',
+    params: { Um: 115, Uc: 70, Ures: 280, withstand: 550, distance: 18, Lconn: 1.2, diDt: 10, requiredMargin: 20 },
+    goals: [goal('t6-margen'), goal('t6-tov')],
+    forecast: 'falla',
+    lesson:
+      'U_eq = 280 + 216 = 496 kV y M = 10,9 %: la cuenta es positiva y aun así incumple el 20 %. La TOV (83 kV) sí cabe en 1,3·U_c = 91 kV: lo que falla es la conexión.',
+  },
+  {
+    id: 't6-e',
+    name: 'Equipo con BIL reforzado',
+    brief:
+      'La misma bahía de 115 kV con BIL = 650 kV, pararrayos a 18 m, U_res = 280 kV y L_c = 1,2 µH/m.',
+    params: { Um: 115, Uc: 70, Ures: 280, withstand: 650, distance: 18, Lconn: 1.2, diDt: 10, requiredMargin: 20 },
+    goals: [goal('t6-margen'), goal('t6-tov')],
+    forecast: 'sostiene',
+    lesson: 'U_eq = 496 kV y M = 31 %: el BIL reforzado compra casi el margen que falta, sin mover el pararrayos.',
+  },
+  {
     id: 't6-c',
     name: 'Descargador con U_c justa',
     brief:
@@ -587,6 +707,26 @@ const casos7: CaseSpec[] = [
     goals: [goal('t7-perdidas'), goal('t7-incepcion')],
     forecast: 'sostiene',
     lesson: 'Con U₀ = 190 kV, P = 10,3 kW/km: veinte kilovoltios de umbral cambian el resultado por tres.',
+  },
+  {
+    id: 't7-d',
+    name: 'Haz de conductores en 500 kV',
+    brief:
+      'Línea de 500 kV con haz equivalente de r = 3,0 cm, s = 900 cm, δ = 0,88 y U₀ = 470 kV. Presupuesto 8 kW/km.',
+    params: { f: 60, delta: 0.88, r: 3.0, s: 900, U: 500, U0: 470, budget: 14 },
+    goals: [goal('t7-perdidas')],
+    forecast: 'sostiene',
+    lesson: 'P = 12,1 kW/km frente a un presupuesto de 14: el haz equivalente grueso y el umbral alto dejan margen, aunque la incepción está cerca.',
+  },
+  {
+    id: 't7-e',
+    name: 'Lluvia sobre el mismo haz',
+    brief:
+      'El mismo haz de 500 kV, pero con el umbral reducido a 430 kV por lluvia y superficie mojada. Presupuesto 8 kW/km.',
+    params: { f: 60, delta: 0.88, r: 3.0, s: 900, U: 500, U0: 430, budget: 14 },
+    goals: [goal('t7-perdidas')],
+    forecast: 'falla',
+    lesson: 'P = 66,1 kW/km: cuarenta kilovoltios menos de umbral multiplican por 5,4 las pérdidas (70² frente a 30²). La lluvia no perdona.',
   },
   {
     id: 't7-c',

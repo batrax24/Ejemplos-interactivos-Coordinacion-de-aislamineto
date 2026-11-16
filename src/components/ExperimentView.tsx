@@ -21,6 +21,9 @@ interface Props {
   /** Misión de guardia del experimento, si el tema la tiene. */
   defended?: boolean;
   onDefend?: (themeId: string, score: number) => void;
+  /** Borrador del día de guardia del tema (medidas ya elegidas). */
+  draft?: Record<string, string>;
+  onDraft?: (themeId: string, picks: Record<string, string>) => void;
 }
 
 export function ExperimentView({
@@ -36,6 +39,8 @@ export function ExperimentView({
   onBack,
   defended = false,
   onDefend,
+  draft,
+  onDraft,
 }: Props) {
   const [params, setParams] = useState<Params>(() => defaults(def.params));
   const [hintOpen, setHintOpen] = useState(false);
@@ -171,6 +176,8 @@ export function ExperimentView({
             theme={theme}
             def={def}
             defended={defended}
+            draft={draft}
+            onDraft={onDraft}
             onExit={() => setMode('explorar')}
             onDefend={onDefend}
           />

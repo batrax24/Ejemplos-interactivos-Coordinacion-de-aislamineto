@@ -50,13 +50,20 @@ import { THEMES, themeById } from '../../gameplay/themes';
 import { TARGETS, targetById } from '../../gameplay/targets';
 import { evaluateDay, forecastScore } from '../../gameplay/types';
 import { FUNCIONES, FUNCION_CHAPTERS } from '../../gameplay/funciones';
-import { BANCO, ETAPAS, revisar, ronda } from '../../gameplay/defensa';
+import { BANCO, ETAPAS, revisar, ronda, rondaSize } from '../../gameplay/defensa';
 import { EXPERIMENTS } from '../../experiments';
 import { renderToString } from 'react-dom/server';
 import { createElement } from 'react';
 import { LabHome } from '../../components/LabHome';
 import { ExperimentView } from '../../components/ExperimentView';
-import { emptyProgress } from '../storage';
+import {
+  emptyProgress,
+  exportProgress,
+  importProgress,
+  loadProgressDetailed,
+  normalizeProgress,
+  saveProgress,
+} from '../storage';
 import { DefendSummary, DefendView } from '../../gameplay/DefendView';
 import { Sustentacion } from '../../gameplay/Sustentacion';
 import { GameDay } from '../../gameplay/GameDay';
@@ -86,7 +93,7 @@ describe('temas y criterios', () => {
     expect(THEMES.length).toBe(7);
     for (const t of THEMES) {
       expect(EXPERIMENTS.some((e) => e.id === t.expId), `${t.id} → ${t.expId}`).toBe(true);
-      expect(t.daily.cases.length, t.id).toBe(3);
+      expect(t.daily.cases.length, t.id).toBeGreaterThanOrEqual(5);
       expect(t.daily.options.length, t.id).toBeGreaterThanOrEqual(5);
       expect(t.daily.options.filter((o) => o.falseProtection).length, t.id).toBeGreaterThanOrEqual(1);
     }
@@ -215,8 +222,8 @@ describe('cuentas del material', () => {
 });
 
 describe('las 14 funciones', () => {
-  it('hay 14, repartidas en los 4 bloques, con una sola respuesta correcta', () => {
-    expect(FUNCIONES.length).toBe(14);
+  it('están repartidas en los 4 bloques, con una sola respuesta correcta', () => {
+    expect(FUNCIONES.length).toBeGreaterThanOrEqual(21);
     for (const ch of FUNCION_CHAPTERS) {
       expect(FUNCIONES.filter((f) => f.chapter === ch.id).length).toBeGreaterThan(0);
     }
@@ -250,13 +257,15 @@ describe('sustentación', () => {
     expect(revisar(c, '0,724' as never).ok).toBe(true);
   });
 
-  it('las rondas de los tres niveles tienen 5 preguntas y no repiten tema', () => {
+  it('cada ronda tiene el tamaño de su nivel y mezcla temas', () => {
     for (const etapa of ETAPAS) {
       const qs = ronda(etapa.n, 42);
-      expect(qs.length, `nivel ${etapa.n}`).toBe(5);
+      expect(qs.length, `nivel ${etapa.n}`).toBe(rondaSize(etapa.n));
       const temas = new Set(qs.map((q) => q.tema.split(' · ')[0]));
-      expect(temas.size, `nivel ${etapa.n}`).toBeGreaterThanOrEqual(4);
+      expect(temas.size, `nivel ${etapa.n}`).toBeGreaterThanOrEqual(Math.min(4, qs.length));
     }
+    expect(rondaSize(4)).toBe(10);
+    expect(rondaSize(1)).toBe(5);
   });
 
   it('la misma semilla da la misma ronda y semillas distintas la cambian', () => {
@@ -266,7 +275,7 @@ describe('sustentación', () => {
 
   it('hay preguntas de cálculo verificadas contra los valores del curso', () => {
     const calc = BANCO.filter((p) => p.kind === 'calculo');
-    expect(calc.length).toBeGreaterThanOrEqual(10);
+    expect(calc.length).toBeGreaterThanOrEqual(20);
     const expected = calc.map((c) => (c.kind === 'calculo' ? c.expected : 0));
     expect(expected).toContain(200.04);
     expect(expected).toContain(4.02);
@@ -297,18 +306,18 @@ describe('pantallas del juego (render)', () => {
     expect((html.match(/class="chapter"/g) ?? []).length).toBe(4);
   });
 
-  it('Defiende renderiza los 4 bloques y las 14 tarjetas', () => {
+  it('Defiende renderiza los 4 bloques y todas las tarjetas', () => {
     const html = renderToString(
       createElement(DefendView, { progress: emptyProgress(), onGoto: () => {}, onSolve: () => {} }),
     );
     expect((html.match(/class="defend__block"/g) ?? []).length).toBe(4);
-    expect((html.match(/class="fcard /g) ?? []).length).toBe(14);
+    expect((html.match(/class="fcard /g) ?? []).length).toBe(FUNCIONES.length);
     expect(html).toContain('Se desbloquea al resolver');
   });
 
   it('Sustentación arranca en el nivel 1 con una pregunta y sus opciones', () => {
     const html = renderToString(
-      createElement(Sustentacion, { defense: 0, onPass: () => {}, onGoto: () => {} }),
+      createElement(Sustentacion, { defense: 0, best: {}, onPass: () => {}, onScore: () => {}, onGoto: () => {} }),
     );
     expect(html).toContain('Simulacro de sustentación');
     expect(html).toContain('Nivel conceptual');
@@ -398,30 +407,23 @@ describe('interacción del día de guardia', () => {
     const send = [...host.querySelectorAll('button')].find((b) => b.textContent?.includes('Enviar jornada'))!;
     expect(send.disabled).toBe(true);
 
-    // Elegir la cruceta más larga en el primer caso.
-    const tool = [...host.querySelectorAll('.tool')].find((b) => b.textContent?.includes('Cruceta más larga')) as
-      | HTMLButtonElement
-      | undefined;
-    expect(tool).toBeTruthy();
-    await act(async () => tool!.click());
-    await flush();
-    expect(host.querySelector('.criterion.is-ok')).toBeTruthy();
-
-    // Recorrer los otros dos casos: uno ya cumple (mantener), el otro pide ajuste.
+    // Recorrer todos los casos: el que ya cumple se mantiene, el que no pide medida.
     const tabs = [...host.querySelectorAll('.mission__tab')] as HTMLButtonElement[];
-    await act(async () => tabs[1].click());
-    await flush();
-    const keep = [...host.querySelectorAll('.tool')].find((b) =>
-      b.textContent?.includes('Mantener el diseño actual'),
-    ) as HTMLButtonElement;
-    await act(async () => keep.click());
-    await flush();
-
-    await act(async () => tabs[2].click());
-    await flush();
-    const d0 = [...host.querySelectorAll('.tool')].find((b) => b.textContent?.includes('Cruceta más larga')) as HTMLButtonElement;
-    await act(async () => d0.click());
-    await flush();
+    expect(tabs.length).toBeGreaterThanOrEqual(5);
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = [...host.querySelectorAll('.mission__tab')] as HTMLButtonElement[];
+      await act(async () => tab[i].click());
+      await flush();
+      const cumple = Boolean(host.querySelector('.criterion.is-bad')) === false;
+      const label = cumple ? 'Mantener el diseño actual' : 'Cruceta más larga';
+      const tool = [...host.querySelectorAll('.tool')].find((b) => b.textContent?.includes(label)) as
+        | HTMLButtonElement
+        | undefined;
+      expect(tool, `caso ${i + 1}: ${label}`).toBeTruthy();
+      await act(async () => tool!.click());
+      await flush();
+      expect(host.querySelector('.criterion.is-ok'), `caso ${i + 1}`).toBeTruthy();
+    }
 
     const send2 = [...host.querySelectorAll('button')].find((b) => b.textContent?.includes('Enviar jornada'))!;
     expect(send2.disabled).toBe(false);
@@ -442,7 +444,13 @@ describe('sustentación (interacción)', () => {
     const root = createRoot(host);
     const passed: number[] = [];
     await act(async () => {
-      root.render(createElement(Sustentacion, { defense: 0, onPass: (n: number) => passed.push(n), onGoto: () => {} }));
+      root.render(createElement(Sustentacion, {
+        defense: 0,
+        best: {},
+        onPass: (n: number) => passed.push(n),
+        onScore: () => {},
+        onGoto: () => {},
+      }));
     });
     const flush = async () => {
       await act(async () => {
@@ -502,7 +510,7 @@ describe('App con las piezas de juego', () => {
     await act(async () => defiende.click());
     await flush();
     expect(host.textContent).toContain('Las afirmaciones que separan');
-    expect(host.querySelectorAll('.fcard').length).toBe(14);
+    expect(host.querySelectorAll('.fcard').length).toBe(FUNCIONES.length);
 
     const sust = [...host.querySelectorAll('.topbar__view')].find((b) =>
       b.textContent?.includes('Sustentación'),
@@ -519,6 +527,57 @@ describe('App con las piezas de juego', () => {
 
     await act(async () => root.unmount());
     host.remove();
+  });
+});
+
+describe('el progreso nunca deja al estudiante sin salida', () => {
+  it('un guardado corrupto se sustituye por la copia de seguridad', () => {
+    localStorage.clear();
+    const p = emptyProgress();
+    p.xp = 640;
+    p.lab.defense = 2;
+    saveProgress(p);
+    localStorage.setItem('labca.progress.v2', '{esto no es json');
+    const res = loadProgressDetailed();
+    expect(res.recovered).toBe(true);
+    expect(res.progress.xp).toBe(640);
+    expect(res.progress.lab.defense).toBe(2);
+  });
+
+  it('sin guardado arranca limpio y sin lanzar', () => {
+    localStorage.clear();
+    const res = loadProgressDetailed();
+    expect(res.fresh).toBe(true);
+    expect(res.progress.xp).toBe(0);
+  });
+
+  it('normaliza formas raras: NaN, negativos y campos ausentes', () => {
+    const p = normalizeProgress({ xp: -40, lab: { defense: 99, missions: null } });
+    expect(p.xp).toBe(0);
+    expect(p.lab.defense).toBe(4);
+    expect(p.lab.missions).toEqual({});
+    expect(normalizeProgress(null).xp).toBe(0);
+  });
+
+  it('exportar e importar conserva XP, misiones y funciones', () => {
+    const p = emptyProgress();
+    p.xp = 910;
+    p.lab.missions = { corona: 100 };
+    p.lab.funciones = { 'f-tov': 1 };
+    p.enabledAudio = false;
+    const texto = exportProgress(p);
+    const vuelta = importProgress(texto);
+    expect(vuelta).not.toBeNull();
+    expect(vuelta!.xp).toBe(910);
+    expect(vuelta!.lab.missions.corona).toBe(100);
+    expect(vuelta!.lab.funciones['f-tov']).toBe(1);
+    expect(vuelta!.enabledAudio).toBe(false);
+  });
+
+  it('un archivo ajeno o vacío no se acepta como progreso', () => {
+    expect(importProgress('hola')).toBeNull();
+    expect(importProgress('{}')).toBeNull();
+    expect(importProgress(JSON.stringify({ app: 'otra-cosa' }))).toBeNull();
   });
 });
 

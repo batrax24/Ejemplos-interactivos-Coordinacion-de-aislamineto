@@ -35,13 +35,13 @@ Cada estación incluye además:
 
 ## Las cuatro capas del juego
 
-El laboratorio tiene tres piezas que van de la intuición a la defensa oral del tema:
+El laboratorio tiene cuatro piezas que van de la intuición a la defensa oral del tema:
 
 ### 1. Explorar (los 14 experimentos)
 Sliders, escena y gráfica. Es la capa de intuición: mover y ver.
 
 ### 2. Día de guardia (siete misiones, una por tema)
-En los experimentos 04, 06, 07, 09, 10, 12 y 13 aparece una pestaña **Día de guardia**. Cada misión plantea **tres casos** y un **maletín de medidas**:
+En los experimentos 04, 06, 07, 09, 10, 12 y 13 aparece una pestaña **Día de guardia**. Cada misión plantea **cinco casos** (35 escenarios en total) y un **maletín de cinco medidas**:
 
 1. **Diagnóstico**: antes de calcular, ¿este caso va a fallar o a sostener? Se puntúa al final.
 2. **Medida**: una decisión por caso. La escena, la gráfica y los criterios se recalculan *con la medida aplicada*, así que el número de la reserva se mueve en vivo.
@@ -49,19 +49,22 @@ En los experimentos 04, 06, 07, 09, 10, 12 y 13 aparece una pestaña **Día de g
 
 La trampa pedagógica es explícita: algunas medidas **mejoran el número sin cambiar la física** (bajar la distancia exigida, declarar otra convención de ángulo, medir la resistencia a 50 Hz, aceptar un margen positivo pero menor que el exigido). El juego las marca como *falsa protección* y no cuentan como solución, aunque el indicador se ponga en verde.
 
+El diagnóstico previo cuenta: el informe separa los casos **resueltos con una medida física** de los que **ya cumplían y se conservaron** (tocar lo que estaba bien también es un error), y compara tu pronóstico de «falla / sostiene» con el resultado real. Las medidas elegidas se guardan como borrador: si cierras la pestaña a mitad de jornada, al volver siguen ahí.
+
 Las cuentas de cada criterio están a la vista (`U₅ = 700 − 1,645·42 = 631 kV`, `M = (1050/660 − 1)·100 = 59,1 %`), y el cierre de cada jornada añade el punto fino para la sustentación.
 
-### 3. Defiende (las 14 funciones)
-Mapa conceptual de las **8 ideas críticas** del material más los **6 puntos que marcan la diferencia**. Cada tarjeta es una afirmación que suena razonable y falla en un detalle; se elige el cierre correcto, se explica el error y se abre el experimento que lo demuestra. Se desbloquea resolviendo los retos del bloque.
+### 3. Defiende (las 21 funciones)
+Mapa conceptual de las **8 ideas críticas** del material, los **6 puntos que marcan la diferencia** y **7 funciones nuevas** que cruzan temas (fase–tierra, fuga frente a arco, onda viajera, TOV, altitud, tierra y personas, selección de aislamiento). Cada tarjeta es una afirmación que suena razonable y falla en un detalle; se elige el cierre correcto, se explica el error y se abre el experimento que lo demuestra. Se desbloquea resolviendo los retos del bloque.
 
 ### 4. Sustentación (simulacro)
-El propio documento de preparación lo pedía: **preguntas aleatorias de los siete temas, con cálculo y repreguntas del profesor**. Tres niveles:
+El propio documento de preparación lo pedía: **preguntas aleatorias de los siete temas, con cálculo y repreguntas del profesor**. Cuatro niveles:
 
-- **Conceptual**: las 14 funciones, sin fórmulas.
-- **Matemático**: los ejercicios del curso con tolerancia (±2–4 %) y repregunta al acertar.
-- **Crítico**: casos de diagnóstico más los cálculos con su repregunta.
+- **Conceptual**: las 21 funciones, sin fórmulas. 5 preguntas, 4 para aprobar.
+- **Matemático**: los ejercicios del curso con tolerancia (±1–4 %) y repregunta al acertar. 5 preguntas, 4 para aprobar.
+- **Crítico**: casos de diagnóstico más los cálculos con su repregunta. 5 preguntas, 4 para aprobar.
+- **Examen final**: 10 preguntas mezcladas de todo el banco (25 cálculos + conceptos + diagnóstico), 8 para aprobar.
 
-Cinco preguntas por ronda, cuatro aciertos para aprobar. Cada respuesta explica la cuenta y enlaza al experimento.
+Cada respuesta explica la cuenta y enlaza al experimento. La ronda evita repetir tema mientras haya margen y es determinista por semilla, así que «otra ronda» da otra mezcla. Se guarda el **récord de cada nivel** y el nivel abierto.
 
 ## Cómo jugar
 
@@ -71,7 +74,16 @@ Cinco preguntas por ronda, cuatro aciertos para aprobar. Cada respuesta explica 
 4. Avanza por los cuatro bloques (Esfuerzos → Ambiente y aislamiento → Protección → Síntesis).
 5. Cierra con la **misión final**, que solo se resuelve coordinando cadena, altitud, descargador y BIL a la vez.
 
-El progreso se guarda en `localStorage` (XP, sellos, estrellas e intentos). El audio es procedural (Web Audio API), sin archivos externos, y se puede silenciar.
+El progreso se guarda en `localStorage` (XP, sellos, estrellas, intentos, misiones, funciones, nivel de sustentación y borradores). El audio es procedural (Web Audio API), sin archivos externos, y se puede silenciar.
+
+### Si algo falla, no te quedas bloqueado
+
+El laboratorio está pensado para sobrevivir a un guardado roto, a un `localStorage` bloqueado (modo privado, iframe) o a un error de render:
+
+- **Copia de seguridad automática**: cada guardado escribe también una copia. Si el principal no se puede leer, se recupera solo y se avisa con un banner.
+- **Descargar / cargar el progreso**: el botón de la barra superior descarga un `.json` con todo; la portada permite cargarlo en otro equipo. Un archivo ajeno o vacío se rechaza sin tocar nada.
+- **Reiniciar**: borra el progreso con confirmación previa.
+- **Pantalla de recuperación**: si React lanza un error, aparece un `ErrorBoundary` con *Reintentar*, *Descargar progreso*, *Copiar detalle* y *Reiniciar* en lugar de una página en blanco.
 
 ---
 
@@ -80,7 +92,7 @@ El progreso se guarda en `localStorage` (XP, sellos, estrellas e intentos). El a
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 112 pruebas: fórmulas del material, juego, render e interacción
+npm test           # 117 pruebas: fórmulas del material, juego, render, interacción y respaldo
 npm run build      # build de producción en dist/
 npm run preview
 npm run render:scenes   # opcional: exporta las 14 escenas a tools/renders/*.png
@@ -90,13 +102,13 @@ Requiere Node ≥ 18. Sin dependencias de UI externas: React + canvas + SVG.
 
 ### Pruebas
 
-112 pruebas en `src/lib/__tests__/`:
+117 pruebas en `src/lib/__tests__/`:
 
 - `experiments.test.ts` — reproduce los valores del material (200,04 kV, 575,1 kV, 646,2 kV, 21 discos, −0,60, 59,1 %, 10,29 kW/km…) y comprueba que **los 14 retos son alcanzables**.
 - `smoke.test.tsx` — render de las 14 estaciones y lecturas finitas.
 - `layout.test.tsx` — estructura de cada vista (escena, gráfica, sliders, lecturas, reto, ecuaciones).
 - `interaction.test.tsx` — con jsdom: navegar, mover un deslizador, validar un reto, guardar progreso y recorrer las 14 estaciones.
-- `gameplay.test.ts` — las tres capas del juego: que cada jornada tenga solución con el maletín, que las medidas de «falsa protección» nunca cuenten como válidas, que los pronósticos coincidan con el cálculo, que las 14 funciones tengan una sola respuesta correcta, que el banco de preguntas se responda (con tolerancia y coma decimal) y que las pantallas rendericen sin `NaN`. Incluye una prueba de interacción completa del día de guardia y otra del simulacro.
+- `gameplay.test.ts` — las cuatro capas del juego: que cada jornada (35 casos) tenga solución con el maletín, que las medidas de «falsa protección» nunca cuenten como válidas, que los pronósticos coincidan con el cálculo, que las 21 funciones tengan una sola respuesta correcta, que el banco de preguntas (25 cálculos) se responda con tolerancia y coma decimal, que los niveles pidan 5 y 10 preguntas, que las pantallas rendericen sin `NaN`, que un guardado corrupto se recupere de la copia, que exportar/importar conserve todo y que la interacción completa del día de guardia y del simulacro funcione.
 
 ### Despliegue en GitHub Pages
 
@@ -123,11 +135,11 @@ src/
     types.ts                 motor: casos, medidas, criterios, informe del día
     targets.ts               los 19 criterios de protección con sus cuentas
     themes.ts                los 7 temas: casos, maletín, qué se aprende
-    funciones.ts             las 14 funciones críticas de la exposición
+    funciones.ts             las 21 funciones críticas de la exposición
     defensa.ts               banco de preguntas y generador de rondas
     GameDay.tsx              pantalla del día de guardia
     DefendView.tsx           mapa de funciones
-    Sustentacion.tsx         simulacro de tres niveles
+    Sustentacion.tsx         simulacro de cuatro niveles (examen final incluido)
   experiments/
     types.ts                 contrato de un experimento
     e01…e14-*.tsx            definición de cada experimento (cálculo + gráfica + reto)

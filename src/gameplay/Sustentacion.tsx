@@ -1,26 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EXPERIMENTS } from '../experiments';
 import { sfx } from '../lib/audio';
 import { Icon, Pill } from '../components/ui';
-import { ETAPAS, revisar, ronda } from './defensa';
+import { ETAPAS, etapaSpec, revisar, ronda, rondaSize } from './defensa';
+import type { Pregunta } from './defensa';
 
 /**
  * Simulacro de sustentación.
  *
- * Tres etapas (conceptual, matemática y crítica), cinco preguntas por ronda y
- * un mínimo de cuatro aciertos. Las preguntas de cálculo piden un número y,
- * cuando aciertas, el profesor repregunta el concepto que hay detrás.
+ * Cuatro niveles (conceptual, matemático, crítico y examen final de diez
+ * preguntas). Cada ronda exige una nota mínima; el resultado se puede reintentar
+ * con otra mezcla. El avance y el récord de cada nivel se guardan.
  */
 export function Sustentacion({
   defense,
+  best,
   onPass,
+  onScore,
   onGoto,
 }: {
   defense: number;
+  /** Mejor nota por nivel (aciertos). */
+  best: Record<string, number>;
   onPass: (etapa: number) => void;
+  onScore: (etapa: number, hits: number) => void;
   onGoto: (id: string) => void;
 }) {
-  const [etapa, setEtapa] = useState(Math.min(3, defense + 1));
+  const [etapa, setEtapa] = useState(Math.min(ETAPAS.length, defense + 1));
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const preguntas = useMemo(() => ronda(etapa, seed), [etapa, seed]);
   const [idx, setIdx] = useState(0);
@@ -28,6 +34,7 @@ export function Sustentacion({
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [done, setDone] = useState(false);
 
+  const spec = etapaSpec(etapa);
   const q = preguntas[idx];
   const answered = q ? answers[q.id] : undefined;
   const isChecked = q ? Boolean(checked[q.id]) : false;
@@ -35,7 +42,15 @@ export function Sustentacion({
 
   const hits = preguntas.filter((p) => checked[p.id] && revisar(p, answers[p.id] ?? '').ok).length;
   const totalChecked = preguntas.filter((p) => checked[p.id]).length;
-  const pass = hits >= 4 && totalChecked === preguntas.length;
+  const pass = hits >= spec.min && totalChecked === preguntas.length;
+
+  // Al cerrar la ronda se registra la nota, apruebe o no.
+  useEffect(() => {
+    if (!done) return;
+    onScore(etapa, hits);
+    if (hits >= spec.min) onPass(etapa);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
 
   const choose = (v: string | number) => {
     if (isChecked) return;
@@ -53,10 +68,7 @@ export function Sustentacion({
 
   const next = () => {
     if (idx < preguntas.length - 1) setIdx(idx + 1);
-    else {
-      setDone(true);
-      if (pass) onPass(etapa);
-    }
+    else setDone(true);
   };
 
   const restart = (nuevaEtapa: number) => {
@@ -77,11 +89,14 @@ export function Sustentacion({
           <span className="exp__num">Σ</span>
           <div>
             <h2>Simulacro de sustentación</h2>
-            <p>Preguntas mezcladas de los siete temas, con cálculo y repreguntas</p>
+            <p>Cuatro niveles · preguntas mezcladas de los siete temas, cálculo y repreguntas</p>
           </div>
         </div>
         <div className="sust__score">
           <Icon name="trophy" size={15} /> {hits}/{preguntas.length} en esta ronda
+          {best[String(etapa)] !== undefined && (
+            <span className="sust__record">récord {best[String(etapa)]}/{rondaSize(etapa)}</span>
+          )}
         </div>
       </header>
 
@@ -97,6 +112,9 @@ export function Sustentacion({
             <span className="mono">Nivel {e.n}</span>
             <strong>{e.name}</strong>
             <em>{stageLocked(e.n) ? 'Se abre al aprobar el nivel anterior' : e.blurb}</em>
+            <span className="sust__stagereq">
+              {e.size} preguntas · {e.min} para aprobar
+            </span>
             {defense >= e.n && <Icon name="check" size={14} />}
           </button>
         ))}
@@ -187,9 +205,7 @@ export function Sustentacion({
                       </button>
                     ))}
                   </div>
-                  {answers[`${q.id}-rp`] !== undefined && (
-                    <p className="sust__reaskwhy">{q.repregunta.why}</p>
-                  )}
+                  {answers[`${q.id}-rp`] !== undefined && <p className="sust__reaskwhy">{q.repregunta.why}</p>}
                 </div>
               )}
               <div className="sust__actions">
@@ -204,7 +220,9 @@ export function Sustentacion({
 
           <div className="sust__footer">
             <span className="sust__hint">
-              {q.kind === 'calculo' ? 'Tolerancia ±2–4 %: se acepta coma o punto decimal.' : 'Una sola respuesta es correcta.'}
+              {q.kind === 'calculo'
+                ? 'Tolerancia ±1–4 %: se acepta coma o punto decimal.'
+                : 'Una sola respuesta es correcta.'}
             </span>
             {!isChecked ? (
               <button type="button" className="btn btn--primary" onClick={check} disabled={answered === undefined}>
@@ -223,17 +241,22 @@ export function Sustentacion({
         <div className={`sust__result ${pass ? 'is-ok' : 'is-bad'}`}>
           <div className="sust__resulhead">
             <Icon name={pass ? 'check' : 'x'} size={20} />
-            <h3>{pass ? `Nivel ${etapa} aprobado` : `Nivel ${etapa}: ${hits} de ${preguntas.length}`}</h3>
+            <h3>
+              {pass ? `Nivel ${etapa} aprobado` : `Nivel ${etapa}: ${hits} de ${preguntas.length}`}
+            </h3>
+            <span className="sust__resultreq">
+              mínimo {spec.min}/{preguntas.length}
+            </span>
           </div>
           <p>
             {pass
-              ? etapa < 3
+              ? etapa < ETAPAS.length
                 ? 'Siguiente nivel desbloqueado. El documento recomienda no saltarse el conceptual: sin él, la fórmula se memoriza y no se defiende.'
-                : 'Los tres niveles superados. El cierre del material: dominar el tema y poder explicarlo con criterio.'
-              : 'El mínimo es 4 de 5. Revisa las explicaciones y vuelve a intentarlo con otra mezcla de preguntas.'}
+                : 'Los cuatro niveles superados: dominas el tema y puedes explicarlo con criterio, que es el cierre que pide el material.'
+              : 'Revisa las explicaciones y vuelve a intentarlo con otra mezcla. Cada error tiene abajo la cuenta y el porqué.'}
           </p>
           <ul className="sust__review">
-            {preguntas.map((p) => {
+            {preguntas.map((p: Pregunta) => {
               const r = checked[p.id] ? revisar(p, answers[p.id] ?? '') : { ok: false, why: 'Sin responder.' };
               return (
                 <li key={p.id} className={r.ok ? 'ok' : 'bad'}>
@@ -251,17 +274,17 @@ export function Sustentacion({
             <button type="button" className="btn btn--primary" onClick={() => restart(etapa)}>
               <Icon name="reset" size={14} /> Otra ronda del nivel {etapa}
             </button>
-            {pass && etapa < 3 && (
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => restart(etapa + 1)}
-              >
+            {pass && etapa < ETAPAS.length && (
+              <button type="button" className="btn btn--ghost" onClick={() => restart(etapa + 1)}>
                 Pasar al nivel {etapa + 1} <Icon name="arrowRight" size={14} />
               </button>
             )}
-            {pass && etapa === 3 && (
-              <button type="button" className="btn btn--ghost" onClick={() => onGoto(EXPERIMENTS[EXPERIMENTS.length - 1].id)}>
+            {pass && etapa === ETAPAS.length && (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => onGoto(EXPERIMENTS[EXPERIMENTS.length - 1].id)}
+              >
                 <Icon name="target" size={14} /> Volver a la misión final
               </button>
             )}
