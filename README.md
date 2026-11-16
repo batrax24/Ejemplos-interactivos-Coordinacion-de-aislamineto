@@ -31,6 +31,37 @@ Cada estación incluye además:
 - **Presets** con los valores exactos del material.
 - **Reto verificable** con validación real, pistas y estrellas (3 sin pista y al primer intento).
 - **Notas y advertencias** tomadas del guion (comparar magnitudes de la misma naturaleza, modelos ideales, convenciones de signos).
+- **Qué se aprende aquí**: objetivo de aprendizaje, cómo se manifiesta el fenómeno en la escena o la gráfica y qué lectura mirar, más el error clásico del tema.
+
+## Las cuatro capas del juego
+
+El laboratorio tiene tres piezas que van de la intuición a la defensa oral del tema:
+
+### 1. Explorar (los 14 experimentos)
+Sliders, escena y gráfica. Es la capa de intuición: mover y ver.
+
+### 2. Día de guardia (siete misiones, una por tema)
+En los experimentos 04, 06, 07, 09, 10, 12 y 13 aparece una pestaña **Día de guardia**. Cada misión plantea **tres casos** y un **maletín de medidas**:
+
+1. **Diagnóstico**: antes de calcular, ¿este caso va a fallar o a sostener? Se puntúa al final.
+2. **Medida**: una decisión por caso. La escena, la gráfica y los criterios se recalculan *con la medida aplicada*, así que el número de la reserva se mueve en vivo.
+3. **Informe**: qué casos quedaron desprotegidos y por qué.
+
+La trampa pedagógica es explícita: algunas medidas **mejoran el número sin cambiar la física** (bajar la distancia exigida, declarar otra convención de ángulo, medir la resistencia a 50 Hz, aceptar un margen positivo pero menor que el exigido). El juego las marca como *falsa protección* y no cuentan como solución, aunque el indicador se ponga en verde.
+
+Las cuentas de cada criterio están a la vista (`U₅ = 700 − 1,645·42 = 631 kV`, `M = (1050/660 − 1)·100 = 59,1 %`), y el cierre de cada jornada añade el punto fino para la sustentación.
+
+### 3. Defiende (las 14 funciones)
+Mapa conceptual de las **8 ideas críticas** del material más los **6 puntos que marcan la diferencia**. Cada tarjeta es una afirmación que suena razonable y falla en un detalle; se elige el cierre correcto, se explica el error y se abre el experimento que lo demuestra. Se desbloquea resolviendo los retos del bloque.
+
+### 4. Sustentación (simulacro)
+El propio documento de preparación lo pedía: **preguntas aleatorias de los siete temas, con cálculo y repreguntas del profesor**. Tres niveles:
+
+- **Conceptual**: las 14 funciones, sin fórmulas.
+- **Matemático**: los ejercicios del curso con tolerancia (±2–4 %) y repregunta al acertar.
+- **Crítico**: casos de diagnóstico más los cálculos con su repregunta.
+
+Cinco preguntas por ronda, cuatro aciertos para aprobar. Cada respuesta explica la cuenta y enlaza al experimento.
 
 ## Cómo jugar
 
@@ -49,7 +80,7 @@ El progreso se guarda en `localStorage` (XP, sellos, estrellas e intentos). El a
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 60 pruebas: fórmulas del material + render de los 14 experimentos
+npm test           # 112 pruebas: fórmulas del material, juego, render e interacción
 npm run build      # build de producción en dist/
 npm run preview
 npm run render:scenes   # opcional: exporta las 14 escenas a tools/renders/*.png
@@ -59,12 +90,13 @@ Requiere Node ≥ 18. Sin dependencias de UI externas: React + canvas + SVG.
 
 ### Pruebas
 
-80 pruebas en `src/lib/__tests__/`:
+112 pruebas en `src/lib/__tests__/`:
 
 - `experiments.test.ts` — reproduce los valores del material (200,04 kV, 575,1 kV, 646,2 kV, 21 discos, −0,60, 59,1 %, 10,29 kW/km…) y comprueba que **los 14 retos son alcanzables**.
 - `smoke.test.tsx` — render de las 14 estaciones y lecturas finitas.
 - `layout.test.tsx` — estructura de cada vista (escena, gráfica, sliders, lecturas, reto, ecuaciones).
 - `interaction.test.tsx` — con jsdom: navegar, mover un deslizador, validar un reto, guardar progreso y recorrer las 14 estaciones.
+- `gameplay.test.ts` — las tres capas del juego: que cada jornada tenga solución con el maletín, que las medidas de «falsa protección» nunca cuenten como válidas, que los pronósticos coincidan con el cálculo, que las 14 funciones tengan una sola respuesta correcta, que el banco de preguntas se responda (con tolerancia y coma decimal) y que las pantallas rendericen sin `NaN`. Incluye una prueba de interacción completa del día de guardia y otra del simulacro.
 
 ### Despliegue en GitHub Pages
 
@@ -87,6 +119,15 @@ src/
     ExperimentView.tsx       laboratorio: escena, controles, ecuación, retos
     IntroModal.tsx           tutorial de 4 pasos
     ui.tsx                   sliders, lecturas, ecuación viva, gráficas SVG
+  gameplay/
+    types.ts                 motor: casos, medidas, criterios, informe del día
+    targets.ts               los 19 criterios de protección con sus cuentas
+    themes.ts                los 7 temas: casos, maletín, qué se aprende
+    funciones.ts             las 14 funciones críticas de la exposición
+    defensa.ts               banco de preguntas y generador de rondas
+    GameDay.tsx              pantalla del día de guardia
+    DefendView.tsx           mapa de funciones
+    Sustentacion.tsx         simulacro de tres niveles
   experiments/
     types.ts                 contrato de un experimento
     e01…e14-*.tsx            definición de cada experimento (cálculo + gráfica + reto)
@@ -111,5 +152,6 @@ El material insiste en varios puntos que la interfaz respeta explícitamente:
 - `U₅₀`, los márgenes y los criterios de fuga **no son universales**: dependen de la norma y del proyecto.
 - La onda de corriente 8/20 µs **no** es la onda de tensión 1,2/50 µs.
 - IEC 60060-1:2025 cambió la definición del impulso de maniobra (170/2500 µs frente a 250/2500 µs de textos anteriores).
+- En el juego, **una cifra verde no siempre es una solución**: las medidas de falsa protección se marcan como tales y no cuentan para superar la jornada.
 
 Los modelos de la misión (N por impulso, capacidad TOV) son simplificaciones didácticas señaladas en las notas de cada estación.

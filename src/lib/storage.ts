@@ -7,20 +7,34 @@ export interface ExpProgress {
   bestError: number | null;
 }
 
+/** Avance en las piezas del laboratorio más allá de los experimentos. */
+export interface LabProgress {
+  /** Misiones de guardia superadas (id del tema → mejor puntaje). */
+  missions: Record<string, number>;
+  /** Funciones respondidas correctamente (id → 1). */
+  funciones: Record<string, 1>;
+  /** Etapa de la sustentación superada (0 = ninguna). */
+  defense: number;
+}
+
 export interface Progress {
   xp: number;
   seenIntro: boolean;
   enabledAudio: boolean;
   exps: Record<string, ExpProgress>;
+  lab: LabProgress;
 }
 
 const KEY = 'labca.progress.v2';
+
+export const emptyLab = (): LabProgress => ({ missions: {}, funciones: {}, defense: 0 });
 
 export const emptyProgress = (): Progress => ({
   xp: 0,
   seenIntro: false,
   enabledAudio: true,
   exps: {},
+  lab: emptyLab(),
 });
 
 export function loadProgress(): Progress {
@@ -32,6 +46,7 @@ export function loadProgress(): Progress {
       ...emptyProgress(),
       ...parsed,
       exps: parsed.exps ?? {},
+      lab: { ...emptyLab(), ...(parsed.lab ?? {}) },
     };
   } catch {
     return emptyProgress();

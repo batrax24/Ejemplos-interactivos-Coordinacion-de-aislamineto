@@ -6,12 +6,18 @@ import { IntroModal } from './components/IntroModal';
 import { Icon } from './components/ui';
 import { loadProgress, rankFor, saveProgress, type Progress } from './lib/storage';
 import { sfx } from './lib/audio';
+import { DefendSummary, DefendView } from './gameplay/DefendView';
+import { Sustentacion, SustResumen } from './gameplay/Sustentacion';
 
 const XP_BY_STARS = [0, 120, 170, 220];
+
+/** Tema de guardia asociado a un experimento. */
+const THEME_FOR = (id: string) => ({ disrupcion: 'mecanismos', cadena: 'cadena', oscilacion: 'separacion', guarda: 'guarda', tierra: 'tierra', pararrayos: 'pararrayos', corona: 'corona' })[id];
 
 export function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [view, setView] = useState<'lab' | 'defiende' | 'sustentacion'>('lab');
   const [showIntro, setShowIntro] = useState(() => !loadProgress().seenIntro);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -79,6 +85,44 @@ export function App() {
     });
   };
 
+  const defend = (themeId: string, score: number) => {
+    let gana = 0;
+    setProgress((prev) => {
+      const old = prev.lab.missions[themeId] ?? 0;
+      gana = old === 0 ? 180 : score > old ? 40 : 0;
+      return {
+        ...prev,
+        xp: prev.xp + gana,
+        lab: {
+          ...prev.lab,
+          missions: { ...prev.lab.missions, [themeId]: Math.max(old, score) },
+        },
+      };
+    });
+    if (gana > 0) setToast(gana >= 180 ? 'Misión superada: +180 XP' : 'Mejor puntaje: +40 XP');
+  };
+
+  const solveFuncion = (id: string) => {
+    setProgress((prev) => {
+      if (prev.lab.funciones[id]) return prev;
+      return {
+        ...prev,
+        xp: prev.xp + 60,
+        lab: { ...prev.lab, funciones: { ...prev.lab.funciones, [id]: 1 } },
+      };
+    });
+  };
+
+  const passEtapa = (n: number) => {
+    let suma = 0;
+    setProgress((prev) => {
+      if (prev.lab.defense >= n) return prev;
+      suma = 200;
+      return { ...prev, xp: prev.xp + 200, lab: { ...prev.lab, defense: n } };
+    });
+    if (suma > 0) setToast(`Nivel ${n} de sustentación aprobado: +200 XP`);
+  };
+
   const doneCount = EXPERIMENTS.filter((e) => progress.exps[e.id]?.done).length;
   const { rank } = rankFor(progress.xp);
 
@@ -91,7 +135,14 @@ export function App() {
       </div>
 
       <header className="topbar">
-        <button type="button" className="brand" onClick={() => setActiveId(null)}>
+        <button
+          type="button"
+          className="brand"
+          onClick={() => {
+            setActiveId(null);
+            setView('lab');
+          }}
+        >
           <span className="brand__mark">
             <Icon name="bolt" size={18} />
           </span>
@@ -101,6 +152,32 @@ export function App() {
           </span>
         </button>
         <nav className="topbar__nav">
+          <button
+            type="button"
+            className={`topbar__view ${view === 'defiende' ? 'is-on' : ''}`}
+            onClick={() => {
+              setActiveId(null);
+              setView(view === 'defiende' ? 'lab' : 'defiende');
+              sfx.nav();
+            }}
+          >
+            <Icon name="shield" size={14} /> Defiende
+            <span className="topbar__viewnum">
+              {Object.keys(progress.lab.funciones).length}/14
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`topbar__view ${view === 'sustentacion' ? 'is-on' : ''}`}
+            onClick={() => {
+              setActiveId(null);
+              setView(view === 'sustentacion' ? 'lab' : 'sustentacion');
+              sfx.nav();
+            }}
+          >
+            <Icon name="trophy" size={14} /> Sustentación
+            <span className="topbar__viewnum">{progress.lab.defense}/3</span>
+          </button>
           <span className="topbar__stat">
             <Icon name="check" size={13} /> {doneCount}/{EXPERIMENTS.length}
           </span>
@@ -145,11 +222,20 @@ export function App() {
             onAttempt={attempt}
             onGoto={goto}
             onBack={() => setActiveId(null)}
+            defended={Boolean(progress.lab.missions[THEME_FOR(active.id) ?? ''])}
+            onDefend={defend}
           />
+        ) : view === 'defiende' ? (
+          <DefendView progress={progress} onGoto={goto} onSolve={solveFuncion} />
+        ) : view === 'sustentacion' ? (
+          <Sustentacion defense={progress.lab.defense} onPass={passEtapa} onGoto={goto} />
         ) : (
           <LabHome
             progress={progress}
             onGoto={goto}
+            extra={<><DefendSummary progress={progress} /><SustResumen defense={progress.lab.defense} /></>}
+            onDefiende={() => setView('defiende')}
+            onSustenta={() => setView('sustentacion')}
             onStart={() => {
               const next = EXPERIMENTS.find((e) => !progress.exps[e.id]?.done) ?? EXPERIMENTS[0];
               goto(next.id);

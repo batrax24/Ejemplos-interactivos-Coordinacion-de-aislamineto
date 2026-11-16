@@ -16,9 +16,13 @@ interface Props {
   onGoto: (id: string) => void;
   onStart: () => void;
   onTour: () => void;
+  /** Paneles de juego (funciones y sustentación) que se insertan antes de los bloques. */
+  extra?: React.ReactNode;
+  onDefiende?: () => void;
+  onSustenta?: () => void;
 }
 
-export function LabHome({ progress, onGoto, onStart, onTour }: Props) {
+export function LabHome({ progress, onGoto, onStart, onTour, extra, onDefiende, onSustenta }: Props) {
   const total = EXPERIMENTS.length;
   const done = EXPERIMENTS.filter((e) => progress.exps[e.id]?.done).length;
   const { rank, next, prog, idx } = rankFor(progress.xp);
@@ -124,6 +128,57 @@ export function LabHome({ progress, onGoto, onStart, onTour }: Props) {
           </div>
         </div>
       </section>
+
+      {(extra || onDefiende || onSustenta) && (
+        <section className="gamehub">
+          <header className="gamehub__head">
+            <p className="gamehub__kicker">
+              <Icon name="shield" size={14} /> Después de explorar
+            </p>
+            <h2>Entender no es mover sliders</h2>
+            <p>
+              Dos piezas convierten los {total} experimentos en criterio: <strong>Defiende</strong> pone a prueba las 14
+              funciones críticas de la exposición y <strong>Sustentación</strong> simula el examen con preguntas
+              aleatorias de los siete temas.
+            </p>
+          </header>
+          <div className="gamehub__grid">
+            {onDefiende && (
+              <button type="button" className="gamehub__card gamehub__card--defiende" onClick={onDefiende}>
+                <span className="gamehub__icon">
+                  <Icon name="shield" size={22} />
+                </span>
+                <strong>Defiende</strong>
+                <em>14 funciones · 4 bloques</em>
+                <p>
+                  Afirmaciones que suenan bien y fallan en un detalle. Elige el cierre correcto y abre el experimento
+                  que lo demuestra.
+                </p>
+                <span className="gamehub__cta">
+                  <Icon name="arrowRight" size={14} /> Abrir el mapa
+                </span>
+              </button>
+            )}
+            {onSustenta && (
+              <button type="button" className="gamehub__card gamehub__card--sustenta" onClick={onSustenta}>
+                <span className="gamehub__icon">
+                  <Icon name="trophy" size={22} />
+                </span>
+                <strong>Sustentación</strong>
+                <em>3 niveles · 5 preguntas por ronda</em>
+                <p>
+                  Conceptual, matemático y crítico. Cálculo con tolerancia, repreguntas del profesor y casos de
+                  diagnóstico.
+                </p>
+                <span className="gamehub__cta">
+                  <Icon name="arrowRight" size={14} /> Empezar simulacro
+                </span>
+              </button>
+            )}
+          </div>
+          {extra}
+        </section>
+      )}
 
       <div className="chapters">
         {CHAPTERS.map((ch, ci) => {
