@@ -221,7 +221,7 @@ describe('cuentas del material', () => {
   });
 });
 
-describe('las 14 funciones', () => {
+describe('las funciones críticas', () => {
   it('están repartidas en los 4 bloques, con una sola respuesta correcta', () => {
     expect(FUNCIONES.length).toBeGreaterThanOrEqual(21);
     for (const ch of FUNCION_CHAPTERS) {

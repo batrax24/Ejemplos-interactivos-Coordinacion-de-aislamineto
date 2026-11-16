@@ -5,13 +5,13 @@
  * los siete temas, con cálculo y repreguntas del profesor. Aquí se mezclan tres
  * tipos de pregunta:
  *
- *  - concepto: el cierre correcto de una de las 14 funciones;
+ *  - concepto: el cierre correcto de una de las funciones críticas;
  *  - diagnóstico: ¿este caso va a fallar o a sostener? (de los días de guardia);
  *  - cálculo: un número con tolerancia, verificado contra los ejemplos del
  *    curso, y una repregunta conceptual encima.
  *
  * Cada ronda de 5 preguntas se aprueba con 4 aciertos. Las rondas siguen los
- * tres niveles de preparación del documento: conceptual, matemático y crítico.
+ * niveles de preparación del documento: conceptual, matemático, crítico y examen final.
  */
 import { FUNCIONES } from './funciones';
 import { THEMES } from './themes';

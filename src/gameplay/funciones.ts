@@ -1,5 +1,5 @@
 /**
- * "Las 14 funciones de la exposición": un reto de comprensión por cada idea que
+ * "Las funciones de la exposición": un reto de comprensión por cada idea que
  * el material considera crítica (8 mapas conceptuales + 6 puntos de refuerzo).
  *
  * Cada función es una afirmación engañosa con cuatro cierres posibles. Se
