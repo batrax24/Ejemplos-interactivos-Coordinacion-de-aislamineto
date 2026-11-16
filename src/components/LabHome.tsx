@@ -3,6 +3,7 @@ import type { Progress } from '../lib/storage';
 import { rankFor } from '../lib/storage';
 import { Icon, Stars } from './ui';
 import { FUNCIONES } from '../gameplay/funciones';
+import { ETAPAS } from '../gameplay/defensa';
 import { sfx } from '../lib/audio';
 
 const CHAPTER_ICON: Record<string, string> = {
@@ -145,7 +146,7 @@ export function LabHome({
         </div>
       </section>
 
-      {(extra || onDefiende || onSustenta) && (
+      {(extra || onDefiende || onSustenta || onExport || onImport || onReset) && (
         <section className="gamehub">
           <header className="gamehub__head">
             <p className="gamehub__kicker">
@@ -181,10 +182,10 @@ export function LabHome({
                   <Icon name="trophy" size={22} />
                 </span>
                 <strong>Sustentación</strong>
-                <em>3 niveles · 5 preguntas por ronda</em>
+                <em>{ETAPAS.length} niveles · hasta 10 preguntas por ronda</em>
                 <p>
-                  Conceptual, matemático y crítico. Cálculo con tolerancia, repreguntas del profesor y casos de
-                  diagnóstico.
+                  Conceptual, matemático, crítico y examen final. Cálculo con tolerancia, repreguntas del profesor y
+                  casos de diagnóstico.
                 </p>
                 <span className="gamehub__cta">
                   <Icon name="arrowRight" size={14} /> Empezar simulacro

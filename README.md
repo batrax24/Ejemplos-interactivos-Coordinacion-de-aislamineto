@@ -92,7 +92,7 @@ El laboratorio está pensado para sobrevivir a un guardado roto, a un `localStor
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 117 pruebas: fórmulas del material, juego, render, interacción y respaldo
+npm test           # 120 pruebas: fórmulas del material, juego, render, interacción y respaldo
 npm run build      # build de producción en dist/
 npm run preview
 npm run render:scenes   # opcional: exporta las 14 escenas a tools/renders/*.png
@@ -102,13 +102,13 @@ Requiere Node ≥ 18. Sin dependencias de UI externas: React + canvas + SVG.
 
 ### Pruebas
 
-117 pruebas en `src/lib/__tests__/`:
+120 pruebas en `src/lib/__tests__/`:
 
 - `experiments.test.ts` — reproduce los valores del material (200,04 kV, 575,1 kV, 646,2 kV, 21 discos, −0,60, 59,1 %, 10,29 kW/km…) y comprueba que **los 14 retos son alcanzables**.
 - `smoke.test.tsx` — render de las 14 estaciones y lecturas finitas.
 - `layout.test.tsx` — estructura de cada vista (escena, gráfica, sliders, lecturas, reto, ecuaciones).
 - `interaction.test.tsx` — con jsdom: navegar, mover un deslizador, validar un reto, guardar progreso y recorrer las 14 estaciones.
-- `gameplay.test.ts` — las cuatro capas del juego: que cada jornada (35 casos) tenga solución con el maletín, que las medidas de «falsa protección» nunca cuenten como válidas, que los pronósticos coincidan con el cálculo, que las 21 funciones tengan una sola respuesta correcta, que el banco de preguntas (25 cálculos) se responda con tolerancia y coma decimal, que los niveles pidan 5 y 10 preguntas, que las pantallas rendericen sin `NaN`, que un guardado corrupto se recupere de la copia, que exportar/importar conserve todo y que la interacción completa del día de guardia y del simulacro funcione.
+- `gameplay.test.ts` — las cuatro capas del juego: que cada jornada (35 casos) tenga solución con el maletín, que las medidas de «falsa protección» nunca cuenten como válidas, que los pronósticos coincidan con el cálculo, que las 21 funciones tengan una sola respuesta correcta, que el banco de preguntas (25 cálculos) se responda con tolerancia y coma decimal, que los niveles pidan 5 y 10 preguntas, que las pantallas rendericen sin `NaN`, que un guardado corrupto se recupere de la copia, que exportar/importar conserve todo, que un error de render muestre la pantalla de recuperación y que la interacción completa del día de guardia y del simulacro funcione.
 
 ### Despliegue en GitHub Pages
 

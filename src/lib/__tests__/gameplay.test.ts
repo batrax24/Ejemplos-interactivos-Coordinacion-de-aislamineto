@@ -68,6 +68,7 @@ import { DefendSummary, DefendView } from '../../gameplay/DefendView';
 import { Sustentacion } from '../../gameplay/Sustentacion';
 import { GameDay } from '../../gameplay/GameDay';
 import { App } from '../../App';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -578,6 +579,62 @@ describe('el progreso nunca deja al estudiante sin salida', () => {
     expect(importProgress('hola')).toBeNull();
     expect(importProgress('{}')).toBeNull();
     expect(importProgress(JSON.stringify({ app: 'otra-cosa' }))).toBeNull();
+  });
+});
+
+describe('la interfaz no deja al estudiante en un callejón sin salida', () => {
+  it('el simulacro muestra los cuatro niveles, el examen final y el récord', () => {
+    const html = renderToString(
+      createElement(Sustentacion, {
+        defense: 2,
+        best: { '3': 4 },
+        onPass: () => {},
+        onScore: () => {},
+        onGoto: () => {},
+      }),
+    ).replace(/<!-- -->/g, '');
+    expect(html).not.toContain('NaN');
+    expect(html).toContain('Examen final');
+    expect(html).toContain('10 preguntas · 8 para aprobar');
+    expect(html).toContain('récord 4/5');
+  });
+
+  it('la portada ofrece siempre descargar e importar el progreso', () => {
+    const html = renderToString(
+      createElement(LabHome, {
+        progress: emptyProgress(),
+        onGoto: () => {},
+        onStart: () => {},
+        onTour: () => {},
+        onDefiende: () => {},
+        onSustenta: () => {},
+        onExport: () => {},
+        onImport: () => {},
+        onReset: () => {},
+      }),
+    );
+    expect(html).toContain('backup');
+    expect(html).toContain('Descargar progreso');
+    expect(html).toContain('Importar');
+    expect(html).toContain('Reiniciar');
+  });
+
+  it('un error de render muestra la pantalla de recuperación, no una página en blanco', async () => {
+    const Boom = () => {
+      throw new Error('fallo de prueba');
+    };
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    const original = console.error;
+    console.error = () => {};
+    await act(async () => {
+      root.render(createElement(ErrorBoundary, { resetKey: 'x', children: createElement(Boom) }));
+    });
+    console.error = original;
+    expect(host.textContent).toContain('Reintentar');
+    expect(host.textContent).toContain('Descargar');
+    expect(host.textContent).toContain('Reiniciar');
+    await act(async () => root.unmount());
   });
 });
 
